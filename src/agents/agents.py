@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from langgraph.pregel import Pregel
 
 from agents.jira_assistant import jira_assistant
+from agents.azure_devops_assistant import azure_devops_assistant
 from schema import AgentInfo
 
 DEFAULT_AGENT = "jira-assistant"
@@ -17,6 +18,10 @@ class Agent:
 agents: dict[str, Agent] = {
     "jira-assistant": Agent(
         description="A JIRA assistant to manage JIRA board.", graph=jira_assistant
+    ),
+    "azure-devops-assistant": Agent(
+        description="An Azure DevOps assistant to manage Azure DevOps resources.",
+        graph=azure_devops_assistant,
     ),
 }
 
