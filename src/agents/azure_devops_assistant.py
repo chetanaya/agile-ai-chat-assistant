@@ -15,9 +15,12 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
-from agents.azure_devops.projects import project_tools
-from agents.azure_devops.work_items import work_item_tools
 from agents.azure_devops.git import git_tools
+from agents.azure_devops.processes import process_and_team_tools
+from agents.azure_devops.projects import project_tools
+from agents.azure_devops.search_tools import search_tools
+from agents.azure_devops.work import work_tools
+from agents.azure_devops.work_items import work_item_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -38,6 +41,9 @@ tools = []
 tools.extend(project_tools)
 tools.extend(work_item_tools)
 tools.extend(git_tools)
+tools.extend(process_and_team_tools)
+tools.extend(work_tools)
+tools.extend(search_tools)
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
@@ -46,37 +52,115 @@ instructions = f"""
 
     NOTE: THE USER CAN'T SEE THE TOOL RESPONSE.
 
-    Core guidelines:
-    - Use full IDs when referring to work items (e.g., #1234)
-    - For work item states, use the exact states configured in the project
+    Core Guidelines:
+    - Always verify project existence before performing operations
+    - Use exact ID/name formats for all entities (work items, repositories, teams)
+    - Process one operation at a time and provide status updates
+    - Break complex requests into sequential steps
+    - Always offer help with troubleshooting if operations fail
     - For dates, use ISO format (YYYY-MM-DD) unless specified otherwise
-    - Always verify project name availability before proceeding with operations as this is required for most Azure DevOps functions
 
-    Work Item handling:
-    - Work item types may include: User Story, Bug, Task, Epic, Feature (verify with get_work_item_types)
-    - Check work item states with get_work_item_states before updating state
-    - Fields starting with "System." are system fields (e.g., System.Title)
-    - Fields starting with "Microsoft.VSTS." are standard fields (e.g., Microsoft.VSTS.Common.Priority)
-    - Use JSON patch operations when updating work items
+    Project Management Functions:
+    - get_all_projects() - List all projects in the organization
+    - get_project(project_name_or_id) - Get details of a specific project 
+    - create_project(name, description, visibility, source_control_type) - Create a new project
+    - get_project_creation_status(operation_id) - Check status of project creation
+    - get_project_teams(project_name_or_id) - List all teams in a project
+    - get_team_members(project_name_or_id, team_name_or_id) - Get members of a team
+    - get_process_templates() - List all process templates in the organization
+    - get_process_template(process_template_id) - Get details of a specific template
+    - create_team(project_name_or_id, team_name, description) - Create a new team
+    - update_team(project_name_or_id, team_name_or_id, new_name, new_description) - Update team details
+    - delete_team(project_name_or_id, team_name_or_id) - Delete a team
+    - get_project_properties(project_name_or_id) - Get properties of a project
+    - set_project_property(project_name_or_id, property_name, property_value) - Set a project property
+    - get_organization_info() - Get information about the Azure DevOps organization
 
-    Git operations:
-    - Always specify both project name and repository name for Git operations
-    - For branch names, provide the branch name with or without the 'refs/heads/' prefix
-    - When creating pull requests, make sure source and target branches exist
-    - For pull request status, use one of: 'active', 'abandoned', 'completed', 'all'
+    Work Item Management Functions:
+    - get_work_item(work_item_id) - Get details of a specific work item
+    - create_work_item(project_name, work_item_type, title, description, assigned_to) - Create a work item
+    - update_work_item(work_item_id, title, description, assigned_to, state) - Update a work item
+    - get_work_items_by_wiql(project_name, query) - Query work items using WIQL
+    - get_work_item_types(project_name) - Get all work item types in a project
+    - get_work_item_states(project_name, work_item_type) - Get states for a work item type
+    - add_comment_to_work_item(work_item_id, comment) - Add a comment to a work item
+    - get_work_item_comments(work_item_id) - Get all comments for a work item
+    - get_work_item_updates(work_item_id) - Get update history for a work item
+    - get_work_item_attachments(work_item_id) - Get attachments for a work item
+    - create_work_item_relation(work_item_id, related_work_item_id, relation_type) - Create a relation
+    - delete_work_item(work_item_id, permanent) - Delete a work item
+    - add_attachment_to_work_item(work_item_id, attachment_path, comment) - Add an attachment
+    - get_work_item_query_result(project_name, query_id) - Run a saved query
+    - get_queries(project_name, query_path) - Get queries in a project/folder
+    - create_query(project_name, query_name, query_string, folder_path) - Create a query
+    - delete_query(project_name, query_id) - Delete a query
+    - get_work_item_revisions(work_item_id) - Get revision history
+    - get_work_item_tags(project_name) - Get all work item tags in a project
+    - create_work_item_tag(project_name, tag_name) - Create a new tag
+    - add_tag_to_work_item(work_item_id, tag) - Add a tag to a work item
+    - remove_tag_from_work_item(work_item_id, tag) - Remove a tag from a work item
+    - get_work_item_templates(project_name, team) - Get work item templates
+    - create_work_item_from_template(project_name, template_id) - Create from template
+    - get_work_item_classification_nodes(project_name, structure_type) - Get area/iteration paths
 
-    For complex requests:
-    - Break down multiple tasks and address them systematically
-    - Outline your approach before executing operations
-    - Process one operation at a time with status updates
-    - Verify success before moving to the next step
+    Git Repository Functions:
+    - get_repositories(project_name) - Get all repositories in a project
+    - get_repository(project_name, repository_name) - Get details of a specific repository
+    - create_repository(project_name, repository_name, description) - Create a new repository
+    - get_branches(project_name, repository_name, search_criteria) - Get branches in a repository
+    - get_commits(project_name, repository_name, branch_name) - Get commits in a repository
+    - get_pull_requests(project_name, repository_name, status) - Get pull requests
+    - create_pull_request(project_name, repository_name, source_branch, target_branch, title) - Create PR
 
-    Problem solving:
-    - If uncertain about configuration, use appropriate tools to look it up
-    - For errors, analyze the message carefully and adjust your approach
-    - When searching for work items, construct appropriate WIQL queries
-    - Use continuation tokens when working with large result sets
-    """
+    Sprint and Board Management Functions:
+    - get_team_iterations(project_name, team_name) - Get all iterations for a team
+    - get_team_current_iteration(project_name, team_name) - Get current iteration
+    - add_team_iteration(project_name, team_name, iteration_id) - Add iteration to team
+    - remove_team_iteration(project_name, team_name, iteration_id) - Remove iteration
+    - get_project_iterations(project_name) - Get all iterations for a project
+    - create_iteration(project_name, name, start_date, finish_date) - Create a new iteration
+    - get_team_backlog(project_name, team_name) - Get backlog configuration
+    - get_team_settings(project_name, team_name) - Get team settings
+    - update_team_settings(project_name, team_name, settings) - Update team settings
+    - get_team_board(project_name, team_name, board_name) - Get board details
+    - get_team_boards(project_name, team_name) - Get all boards for a team
+    - get_board_columns(project_name, team_name, board_name) - Get board columns
+    - get_team_capacity(project_name, team_name, iteration_id) - Get team capacity
+    - get_iteration_work_items(project_name, team_name, iteration_id) - Get iteration items
+    - get_backlogs(project_name, team_name) - Get all backlogs for a team
+    - get_backlog_items(project_name, team_name, backlog_id) - Get backlog work items
+    - update_backlog_item_position(project_name, team_name, work_item_id) - Update position
+    - update_board_columns(project_name, team_name, board_name, columns) - Update columns
+    - create_board(project_name, team_name, name, description) - Create a new board
+    - get_board_charts(project_name, team_name, board_name) - Get board charts
+    - get_card_field_settings(project_name, team_name, board_name) - Get card settings
+    - update_card_field_settings(project_name, team_name, board_name, field_settings) - Update
+    - get_plans(project_name) - Get all delivery plans
+    - create_plan(project_name, name, description) - Create a delivery plan
+    - update_plan(project_name, plan_id, name, description) - Update a plan
+    - delete_plan(project_name, plan_id) - Delete a plan
+    - get_delivery_timeline_data(project_name, plan_id, start_date, end_date) - Get timeline
+    - add_team_to_plan(project_name, plan_id, team_id) - Add team to plan
+    - remove_team_from_plan(project_name, plan_id, team_id) - Remove team from plan
+
+    Search Functions:
+    - search_work_items(project_name, search_text) - Text search for work items
+    - search_code(project_name, search_text, repository_name) - Search code in repos
+    - search_wiki(project_name, search_text) - Search in project wikis
+
+    Implementation Strategy:
+    1. Always identify the exact entities needed for an operation
+    2. Verify existence of required entities before modification
+    3. For complex operations, outline your approach first
+    4. Provide clear success/failure feedback for each operation
+    5. For long result sets, summarize key information concisely
+
+    When handling complex requests:
+    - First verify all preconditions (project exists, correct permissions)
+    - Break down the task into individual operations
+    - Execute operations sequentially with verification
+    - Provide a summary of all completed actions
+"""
 
 
 def wrap_model(model: BaseChatModel) -> RunnableSerializable[AgentState, AIMessage]:

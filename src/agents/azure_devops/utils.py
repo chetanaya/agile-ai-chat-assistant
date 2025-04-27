@@ -49,6 +49,42 @@ class AzureDevOpsClient:
         """
         return self.connection.clients_v7_1.get_core_client()
 
+    def get_work_item_tracking_client(self):
+        """
+        Get a specific Azure DevOps client.
+
+        Returns:
+            Client: The requested Azure DevOps client
+        """
+        return self.connection.clients_v7_1.get_work_item_tracking_client()
+
+    def get_work_client(self):
+        """
+        Get the Azure DevOps Work client for iterations, backlogs, and boards.
+
+        Returns:
+            Client: The Azure DevOps Work client
+        """
+        return self.connection.clients_v7_1.get_work_client()
+
+    def get_git_client(self):
+        """
+        Get the Azure DevOps Git client.
+
+        Returns:
+            Client: The Azure DevOps Git client
+        """
+        return self.connection.clients_v7_1.get_git_client()
+
+    def get_search_client(self):
+        """
+        Get the Azure DevOps Search client.
+
+        Returns:
+            Client: The Azure DevOps Search client
+        """
+        return self.connection.clients_v7_1.get_search_client()
+
     def handle_response_error(self, error):
         """
         Format error message from Azure DevOps API response.

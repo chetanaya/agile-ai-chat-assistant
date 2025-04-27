@@ -5,10 +5,10 @@ This module provides tools for interacting with Azure DevOps projects through th
 """
 
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional
 
-from azure.devops.v7_1.core.models import TeamProject, TeamProjectReference
-from langchain_core.tools import BaseTool, tool
+from azure.devops.v7_1.core.models import TeamProject
+from langchain_core.tools import tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
