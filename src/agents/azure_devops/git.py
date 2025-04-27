@@ -25,7 +25,7 @@ def get_repositories(project_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         repositories = git_client.get_repositories(project_name)
 
@@ -62,7 +62,7 @@ def get_repository(project_name: str, repository_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         repository = git_client.get_repository(repository_name, project_name)
 
@@ -101,7 +101,7 @@ def create_repository(
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         # Create repository object
         repo_create = {"name": repository_name, "project": {"name": project_name}}
@@ -147,7 +147,7 @@ def get_branches(
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         # Get branches
         branches = git_client.get_branches(repository_name, project_name, search_criteria)
@@ -195,7 +195,7 @@ def get_commits(
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         # Create search criteria
         search_criteria = None
@@ -254,7 +254,7 @@ def get_pull_requests(project_name: str, repository_name: str, status: str = "ac
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         # Validate status
         valid_statuses = {"active": 1, "abandoned": 2, "completed": 3, "all": 4}
@@ -329,7 +329,7 @@ def create_pull_request(
     """
     try:
         client = get_azure_devops_client()
-        git_client = client.get_client("git")
+        git_client = client.get_client()
 
         # Format branch names if needed
         if not source_branch.startswith("refs/heads/"):

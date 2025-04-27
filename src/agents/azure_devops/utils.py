@@ -3,10 +3,11 @@ Azure DevOps API Integration Utilities
 """
 
 import os
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
+
 from core import settings
 
 
@@ -39,17 +40,14 @@ class AzureDevOpsClient:
         credentials = BasicAuthentication("", self.azure_devops_pat)
         self.connection = Connection(base_url=self.azure_devops_org_url, creds=credentials)
 
-    def get_client(self, client_type: str):
+    def get_client(self):
         """
         Get a specific Azure DevOps client.
-
-        Args:
-            client_type (str): The type of client to get (core, git, work_item_tracking, etc.)
 
         Returns:
             Client: The requested Azure DevOps client
         """
-        return self.connection.clients.get_client(client_type)
+        return self.connection.clients_v7_1.get_core_client()
 
     def handle_response_error(self, error):
         """

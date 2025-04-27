@@ -4,11 +4,11 @@ Azure DevOps Projects API Functions
 This module provides tools for interacting with Azure DevOps projects through the API.
 """
 
-from typing import Any, Dict, List, Optional, Union
 import json
+from typing import Any, Dict, List, Optional, Union
 
-from langchain_core.tools import BaseTool, tool
 from azure.devops.v7_1.core.models import TeamProject, TeamProjectReference
+from langchain_core.tools import BaseTool, tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
@@ -23,21 +23,10 @@ def get_all_projects() -> str:
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         # Get projects with continuation token support
-        get_projects_response = core_client.get_projects()
-        projects = []
-
-        while get_projects_response is not None:
-            projects.extend(get_projects_response.value)
-
-            if get_projects_response.continuation_token:
-                get_projects_response = core_client.get_projects(
-                    continuation_token=get_projects_response.continuation_token
-                )
-            else:
-                get_projects_response = None
+        projects = core_client.get_projects()
 
         # Format projects for display
         formatted_projects = []
@@ -74,7 +63,7 @@ def get_project(project_name_or_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         project = core_client.get_project(project_name_or_id)
 
@@ -125,7 +114,7 @@ def create_project(
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         # Validate visibility
         if visibility.lower() not in ["private", "public"]:
@@ -171,7 +160,7 @@ def get_project_creation_status(operation_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         operation = core_client.get_operation(operation_id)
 
@@ -201,7 +190,7 @@ def get_project_teams(project_name_or_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         teams = core_client.get_teams(project_name_or_id)
 
@@ -231,7 +220,7 @@ def get_team_members(project_name_or_id: str, team_name_or_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        core_client = client.get_client("core")
+        core_client = client.get_client()
 
         team_members = core_client.get_team_members_with_extended_properties(
             project_name_or_id, team_name_or_id
