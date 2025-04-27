@@ -12,27 +12,12 @@ from client import AgentClient, AgentClientError
 from schema import ChatHistory, ChatMessage
 from schema.task_data import TaskData, TaskDataStatus
 
-# A Streamlit app for interacting with the langgraph agent via a simple chat interface.
-# The app has three main functions which are all run async:
-
-# - main() - sets up the streamlit app and high level structure
-# - draw_messages() - draws a set of chat messages - either replaying existing messages
-#   or streaming new ones.
-# - handle_feedback() - Draws a feedback widget and records feedback from the user.
-
-# The app heavily uses AgentClient to interact with the agent's FastAPI endpoints.
-
-
-APP_TITLE = "Agent Service Toolkit"
+APP_TITLE = "Agile AI Assistance"
 APP_ICON = "🧰"
 
 
 async def main() -> None:
-    st.set_page_config(
-        page_title=APP_TITLE,
-        page_icon=APP_ICON,
-        menu_items={},
-    )
+    st.set_page_config(page_title=APP_TITLE, page_icon=APP_ICON, menu_items={}, layout="wide")
 
     # Hide the streamlit upper-right chrome
     st.html(
@@ -85,10 +70,6 @@ async def main() -> None:
     with st.sidebar:
         st.header(f"{APP_ICON} {APP_TITLE}")
 
-        ""
-        "Full toolkit for running an AI agent service built with LangGraph, FastAPI and Streamlit"
-        ""
-
         if st.button(":material/chat: New Chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.thread_id = str(uuid.uuid4())
@@ -105,19 +86,6 @@ async def main() -> None:
                 index=agent_idx,
             )
             use_streaming = st.toggle("Stream results", value=True)
-
-        @st.dialog("Architecture")
-        def architecture_dialog() -> None:
-            st.image(
-                "https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png?raw=true"
-            )
-            "[View full size on Github](https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png)"
-            st.caption(
-                "App hosted on [Streamlit Cloud](https://share.streamlit.io/) with FastAPI service running in [Azure](https://learn.microsoft.com/en-us/azure/app-service/)"
-            )
-
-        if st.button(":material/schema: Architecture", use_container_width=True):
-            architecture_dialog()
 
         with st.popover(":material/policy: Privacy", use_container_width=True):
             st.write(
@@ -140,22 +108,13 @@ async def main() -> None:
         if st.button(":material/upload: Share/resume chat", use_container_width=True):
             share_chat_dialog()
 
-        "[View the source code](https://github.com/JoshuaC215/agent-service-toolkit)"
-        st.caption(
-            "Made with :material/favorite: by [Joshua](https://www.linkedin.com/in/joshua-k-carroll/) in Oakland"
-        )
-
     # Draw existing messages
     messages: list[ChatMessage] = st.session_state.messages
 
     if len(messages) == 0:
         match agent_client.agent:
-            case "chatbot":
-                WELCOME = "Hello! I'm a simple chatbot. Ask me anything!"
-            case "interrupt-agent":
-                WELCOME = "Hello! I'm an interrupt agent. Tell me your birthday and I will predict your personality!"
-            case "research-assistant":
-                WELCOME = "Hello! I'm an AI-powered research assistant with web search and a calculator. Ask me anything!"
+            case "jira-assistant":
+                WELCOME = "Hello! I'm an AI-powered JIRA Assistant."
             case _:
                 WELCOME = "Hello! I'm an AI agent. Ask me anything!"
         with st.chat_message("ai"):

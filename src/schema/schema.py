@@ -11,11 +11,11 @@ class AgentInfo(BaseModel):
 
     key: str = Field(
         description="Agent key.",
-        examples=["research-assistant"],
+        examples=["jira-assistant"],
     )
     description: str = Field(
         description="Description of the agent.",
-        examples=["A research assistant for generating research papers."],
+        examples=["A JIRA assistant for managing JIRA board."],
     )
 
 
@@ -30,7 +30,7 @@ class ServiceMetadata(BaseModel):
     )
     default_agent: str = Field(
         description="Default agent used when none is specified.",
-        examples=["research-assistant"],
+        examples=["jira-assistant"],
     )
     default_model: AllModelEnum = Field(
         description="Default model used when none is specified.",

@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from langgraph.pregel import Pregel
 
-from agents.research_assistant import research_assistant
+from agents.jira_assistant import jira_assistant
 from schema import AgentInfo
 
-DEFAULT_AGENT = "research-assistant"
+DEFAULT_AGENT = "jira-assistant"
 
 
 @dataclass
@@ -15,9 +15,9 @@ class Agent:
 
 
 agents: dict[str, Agent] = {
-    "research-assistant": Agent(
-        description="A research assistant with web search and calculator.", graph=research_assistant
-    )
+    "jira-assistant": Agent(
+        description="A JIRA assistant to manage JIRA board.", graph=jira_assistant
+    ),
 }
 
 

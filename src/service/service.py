@@ -142,7 +142,7 @@ async def invoke(user_input: UserInput, agent_id: str = DEFAULT_AGENT) -> ChatMe
     """
     # NOTE: Currently this only returns the last message or interrupt.
     # In the case of an agent outputting multiple AIMessages (such as the background step
-    # in interrupt-agent, or a tool step in research-assistant), it's omitted. Arguably,
+    # in interrupt-agent, or a tool step in jira-assistant), it's omitted. Arguably,
     # you'd want to include it. You could update the API to return a list of ChatMessages
     # in that case.
     agent: Pregel = get_agent(agent_id)

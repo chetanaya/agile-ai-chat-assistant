@@ -1,8 +1,12 @@
+"""
+JIRA Assistant
+
+This module provides a JIRA assistant to help users interact with JIRA through natural language.
+"""
+
 from datetime import datetime
 from typing import Literal
 
-from langchain_community.tools import DuckDuckGoSearchResults, OpenWeatherMapQueryRun
-from langchain_community.utilities import OpenWeatherMapAPIWrapper
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig, RunnableLambda, RunnableSerializable
@@ -11,14 +15,17 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
+from agents.jira.issues import issue_tools
+from agents.jira.projects import project_tools
+from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
-from agents.tools import calculator
 from core import get_model, settings
 
 
 class AgentState(MessagesState, total=False):
-    """`total=False` is PEP589 specs.
+    """State for the JIRA assistant.
 
+    `total=False` is PEP589 specs.
     documentation: https://typing.readthedocs.io/en/latest/spec/typeddict.html#totality
     """
 
@@ -26,29 +33,26 @@ class AgentState(MessagesState, total=False):
     remaining_steps: RemainingSteps
 
 
-web_search = DuckDuckGoSearchResults(name="WebSearch")
-tools = [web_search, calculator]
-
-# Add weather tool if API key is set
-# Register for an API key at https://openweathermap.org/api/
-if settings.OPENWEATHERMAP_API_KEY:
-    wrapper = OpenWeatherMapAPIWrapper(
-        openweathermap_api_key=settings.OPENWEATHERMAP_API_KEY.get_secret_value()
-    )
-    tools.append(OpenWeatherMapQueryRun(name="Weather", api_wrapper=wrapper))
+# Combine all JIRA tools
+tools = []
+tools.extend(issue_tools)
+tools.extend(project_tools)
+tools.extend(user_tools)
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
-    You are a helpful research assistant with the ability to search the web and use other tools.
+    You are a helpful JIRA assistant with the ability to interact with JIRA through the REST API.
     Today's date is {current_date}.
 
     NOTE: THE USER CAN'T SEE THE TOOL RESPONSE.
 
     A few things to remember:
-    - Please include markdown-formatted links to any citations used in your response. Only include one
-    or two citations per response unless more are needed. ONLY USE LINKS RETURNED BY THE TOOLS.
-    - Use calculator tool with numexpr to answer math questions. The user does not understand numexpr,
-      so for the final response, use human readable format - e.g. "300 * 200", not "(300 \\times 200)".
+    - You can help users manage JIRA issues, projects, and users.
+    - When referring to JIRA issues, always use the full issue key (e.g., "PROJECT-123").
+    - When creating or updating issues, guide the user through the required fields.
+    - For complex JQL queries, help the user construct the query step by step.
+    - Always verify the success of operations and provide helpful error messages if they fail.
+    - If you're not sure about a JIRA configuration detail, use the appropriate tool to look it up first.
     """
 
 
@@ -145,4 +149,4 @@ def pending_tool_calls(state: AgentState) -> Literal["tools", "done"]:
 
 agent.add_conditional_edges("model", pending_tool_calls, {"tools": "tools", "done": END})
 
-research_assistant = agent.compile(checkpointer=MemorySaver())
+jira_assistant = agent.compile(checkpointer=MemorySaver())
