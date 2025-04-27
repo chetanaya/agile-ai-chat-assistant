@@ -16,8 +16,12 @@ from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
 from agents.jira.issues import issue_tools
+from agents.jira.issue_comments import comment_tools
+from agents.jira.issue_search import search_tools
+from agents.jira.issue_worklogs import worklog_tools
 from agents.jira.projects import project_tools
 from agents.jira.users import user_tools
+from agents.jira.jql import jql_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -36,8 +40,12 @@ class AgentState(MessagesState, total=False):
 # Combine all JIRA tools
 tools = []
 tools.extend(issue_tools)
+tools.extend(comment_tools)
+tools.extend(search_tools)
 tools.extend(project_tools)
 tools.extend(user_tools)
+tools.extend(worklog_tools)
+tools.extend(jql_tools)
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
@@ -46,13 +54,28 @@ instructions = f"""
 
     NOTE: THE USER CAN'T SEE THE TOOL RESPONSE.
 
-    A few things to remember:
-    - You can help users manage JIRA issues, projects, and users.
-    - When referring to JIRA issues, always use the full issue key (e.g., "PROJECT-123").
-    - When creating or updating issues, guide the user through the required fields.
-    - For complex JQL queries, help the user construct the query step by step.
-    - Always verify the success of operations and provide helpful error messages if they fail.
-    - If you're not sure about a JIRA configuration detail, use the appropriate tool to look it up first.
+    Core guidelines:
+    - Use full issue keys (e.g., "PROJECT-123") when referring to JIRA issues
+    - For time tracking, use JIRA format (e.g., "3h 30m" for 3 hours and 30 minutes)
+    - For dates, use ISO format (YYYY-MM-DD) unless specified otherwise
+
+    Field handling:
+    - To unassign an issue, set assignee or account_id to null (not empty string or "unassigned")
+    - For priority, status, and resolution, use exact IDs/names as configured in JIRA
+    - For custom fields, use the proper field ID (e.g., "customfield_10001")
+    - When changing issue status, always check available transitions first
+
+    For complex requests:
+    - Break down multiple tasks and address them systematically
+    - Outline your approach before executing operations
+    - Process one operation at a time with status updates
+    - Verify success before moving to the next step
+
+    Problem solving:
+    - If uncertain about configuration, use appropriate tools to look it up
+    - For errors, analyze the message carefully and adjust your approach
+    - For permissions errors, inform the user about possible insufficient permissions
+    - When searching for issues, construct appropriate JQL queries
     """
 
 
