@@ -4,13 +4,15 @@ Azure DevOps Work Items API Functions
 This module provides tools for interacting with Azure DevOps work items through the API.
 """
 
-from typing import Any, Dict, Optional
 import json
+from typing import Any, Dict, Optional
 
-from langchain_core.tools import tool
 from azure.devops.v7_1.work_item_tracking.models import (
+    CommentCreate,
+    CommentUpdate,
     QueryHierarchyItem,
 )
+from langchain_core.tools import tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
@@ -311,55 +313,27 @@ def get_work_item_types(project_name: str) -> str:
 
 
 @tool
-def get_work_item_states(project_name: str, work_item_type: str) -> str:
+def add_comment_to_work_item(work_item_id: int, project: str, comment: str) -> str:
     """
-    Get all states for a work item type.
-
-    Args:
-        project_name (str): The name of the project
-        work_item_type (str): The type of work item
-
-    Returns:
-        str: JSON string containing all states
-    """
-    try:
-        client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
-
-        states = wit_client.get_work_item_type_states(project_name, work_item_type)
-
-        # Format for display
-        formatted_states = []
-        for state in states:
-            formatted_states.append(
-                {"name": state.name, "color": state.color, "state_category": state.state_category}
-            )
-
-        return json.dumps(formatted_states, indent=2)
-    except Exception as e:
-        return f"Error retrieving work item states: {str(e)}"
-
-
-@tool
-def add_comment_to_work_item(work_item_id: int, comment: str) -> str:
-    """
-    Add a comment to a work item.
+        Add a comment to a work item.
 
     Args:
         work_item_id (int): The ID of the work item
+        project (str): Project ID or project name
         comment (str): The comment text
 
-    Returns:
-        str: JSON string containing the added comment
+        Returns:
+            str: JSON string containing the added comment
     """
     try:
         client = get_azure_devops_client()
         wit_client = client.get_work_item_tracking_client()
 
-        comment_obj = {"text": comment}
+        # Create a CommentCreate object instead of a dictionary
+        comment_obj = CommentCreate(text=comment)
 
         # Add comment
-        added_comment = wit_client.add_comment(comment_obj, work_item_id)
+        added_comment = wit_client.add_comment(comment_obj, project, work_item_id)
 
         # Format for display
         formatted_comment = {
@@ -383,11 +357,12 @@ def add_comment_to_work_item(work_item_id: int, comment: str) -> str:
 
 
 @tool
-def get_work_item_comments(work_item_id: int) -> str:
+def get_work_item_comments(project: str, work_item_id: int) -> str:
     """
     Get all comments for a work item.
 
     Args:
+        project (str): Project ID or project name
         work_item_id (int): The ID of the work item
 
     Returns:
@@ -398,7 +373,7 @@ def get_work_item_comments(work_item_id: int) -> str:
         wit_client = client.get_work_item_tracking_client()
 
         # Get comments
-        comments = wit_client.get_comments(work_item_id)
+        comments = wit_client.get_comments(project, work_item_id)
 
         # Format for display
         formatted_comments = []
@@ -420,6 +395,93 @@ def get_work_item_comments(work_item_id: int) -> str:
         return json.dumps({"count": comments.count, "comments": formatted_comments}, indent=2)
     except Exception as e:
         return f"Error retrieving comments: {str(e)}"
+
+
+@tool
+def delete_work_item_comment(project: str, work_item_id: int, comment_id: int) -> str:
+    """
+    Delete a comment from a work item.
+
+    Args:
+        project (str): Project ID or project name
+        work_item_id (int): The ID of the work item
+        comment_id (int): The ID of the comment to delete
+
+    Returns:
+        str: JSON string containing the result of the operation
+    """
+    try:
+        client = get_azure_devops_client()
+        wit_client = client.get_work_item_tracking_client()
+
+        # Delete the comment
+        wit_client.delete_comment(project, work_item_id, comment_id)
+
+        # Format for display
+        formatted_result = {
+            "message": f"Comment {comment_id} has been deleted from work item {work_item_id}",
+            "success": True,
+        }
+
+        return json.dumps(formatted_result, indent=2)
+    except Exception as e:
+        return f"Error deleting comment: {str(e)}"
+
+
+@tool
+def update_work_item_comment(project: str, work_item_id: int, comment_id: int, text: str) -> str:
+    """
+    Update a comment on a work item.
+
+    Args:
+        project (str): Project ID or project name
+        work_item_id (int): The ID of the work item
+        comment_id (int): The ID of the comment to update
+        text (str): The new text for the comment
+
+    Returns:
+        str: JSON string containing the updated comment
+    """
+    try:
+        client = get_azure_devops_client()
+        wit_client = client.get_work_item_tracking_client()
+
+        # Create a CommentUpdate object
+        comment_update = CommentUpdate(text=text)
+
+        # Update the comment
+        updated_comment = wit_client.update_comment(
+            comment_update, project, work_item_id, comment_id
+        )
+
+        # Format for display
+        formatted_comment = {
+            "id": updated_comment.id,
+            "text": updated_comment.text,
+            "created_by": {
+                "id": updated_comment.created_by.id,
+                "display_name": updated_comment.created_by.display_name,
+            }
+            if updated_comment.created_by
+            else None,
+            "created_date": updated_comment.created_date.isoformat()
+            if updated_comment.created_date
+            else None,
+            "modified_by": {
+                "id": updated_comment.modified_by.id,
+                "display_name": updated_comment.modified_by.display_name,
+            }
+            if hasattr(updated_comment, "modified_by") and updated_comment.modified_by
+            else None,
+            "modified_date": updated_comment.modified_date.isoformat()
+            if hasattr(updated_comment, "modified_date") and updated_comment.modified_date
+            else None,
+            "url": updated_comment.url,
+        }
+
+        return json.dumps(formatted_comment, indent=2)
+    except Exception as e:
+        return f"Error updating comment: {str(e)}"
 
 
 @tool
@@ -1256,9 +1318,10 @@ work_item_tools = [
     update_work_item,
     get_work_items_by_wiql,
     get_work_item_types,
-    get_work_item_states,
     add_comment_to_work_item,
     get_work_item_comments,
+    delete_work_item_comment,
+    update_work_item_comment,
     get_work_item_updates,
     get_work_item_attachments,
     create_work_item_relation,

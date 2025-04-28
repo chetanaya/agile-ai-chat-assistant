@@ -20,6 +20,7 @@ from agents.azure_devops.processes import process_and_team_tools
 from agents.azure_devops.projects import project_tools
 from agents.azure_devops.search_tools import search_tools
 from agents.azure_devops.work import work_tools
+from agents.azure_devops.work_item_tracking_process import work_item_tracking_process_tools
 from agents.azure_devops.work_items import work_item_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
@@ -44,6 +45,8 @@ tools.extend(git_tools)
 tools.extend(process_and_team_tools)
 tools.extend(work_tools)
 tools.extend(search_tools)
+tools.extend(work_item_tracking_process_tools)
+# tools.extend(profile_tools)
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
@@ -82,9 +85,10 @@ instructions = f"""
     - update_work_item(work_item_id, title, description, assigned_to, state) - Update a work item
     - get_work_items_by_wiql(project_name, query) - Query work items using WIQL
     - get_work_item_types(project_name) - Get all work item types in a project
-    - get_work_item_states(project_name, work_item_type) - Get states for a work item type
-    - add_comment_to_work_item(work_item_id, comment) - Add a comment to a work item
+    - add_comment_to_work_item(work_item_id, project, comment) - Add a comment to a work item
     - get_work_item_comments(work_item_id) - Get all comments for a work item
+    - delete_work_item_comment(project, work_item_id, comment_id) - Delete a comment from a work item
+    - update_work_item_comment(project, work_item_id, comment_id, text) - Update a comment on a work item
     - get_work_item_updates(work_item_id) - Get update history for a work item
     - get_work_item_attachments(work_item_id) - Get attachments for a work item
     - create_work_item_relation(work_item_id, related_work_item_id, relation_type) - Create a relation
@@ -102,7 +106,7 @@ instructions = f"""
     - get_work_item_templates(project_name, team) - Get work item templates
     - create_work_item_from_template(project_name, template_id) - Create from template
     - get_work_item_classification_nodes(project_name, structure_type) - Get area/iteration paths
-
+    
     Git Repository Functions:
     - get_repositories(project_name) - Get all repositories in a project
     - get_repository(project_name, repository_name) - Get details of a specific repository
@@ -144,9 +148,21 @@ instructions = f"""
     - remove_team_from_plan(project_name, plan_id, team_id) - Remove team from plan
 
     Search Functions:
-    - search_work_items(project_name, search_text) - Text search for work items
-    - search_code(project_name, search_text, repository_name) - Search code in repos
-    - search_wiki(project_name, search_text) - Search in project wikis
+    - search_code_repositories(search_text, project_name, repository_name, file_path, file_extension) - Search code in repositories
+    - search_work_items_tool(search_text, project_name, work_item_type, state, assigned_to, created_by) - Search for work items
+    - search_wiki_pages(search_text, project_name, wiki_name, path) - Search in project wikis
+    
+    Work Item Tracking Process Functions:
+    - get_processes() - Get all processes in the organization
+    - get_process(process_id) - Get details of a specific process
+    - get_process_work_item_types(process_id) - Get all work item types in a process
+    - get_process_work_item_type(process_id, wit_ref_name) - Get details of a work item type
+    - get_states(process_id, wit_ref_name) - Get all states for a work item type
+    - get_state(process_id, wit_ref_name, state_id) - Get details of a specific state
+    - create_state(process_id, wit_ref_name, name, color, state_category) - Create a new state
+    - update_state(process_id, wit_ref_name, state_id, name, color) - Update a state
+    - delete_state(process_id, wit_ref_name, state_id) - Delete a state
+    - get_process_work_item_type_fields(process_id, wit_ref_name) - Get all fields for a work item type
 
     Implementation Strategy:
     1. Always identify the exact entities needed for an operation
@@ -161,6 +177,12 @@ instructions = f"""
     - Execute operations sequentially with verification
     - Provide a summary of all completed actions
 """
+
+# Profile Management Functions:
+# - get_my_profile() - Get profile details of the authenticated user
+# - get_profile(user_id) - Get profile details of a specific user by ID
+# - get_profiles(profile_ids) - Get profiles for multiple users by their IDs
+# - update_profile(display_name, email_address, contact_with_offers) - Update authenticated user's profile
 
 
 def wrap_model(model: BaseChatModel) -> RunnableSerializable[AgentState, AIMessage]:
