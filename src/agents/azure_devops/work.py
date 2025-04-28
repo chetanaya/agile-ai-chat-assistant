@@ -4,22 +4,24 @@ Azure DevOps Work Management API Functions
 This module provides tools for interacting with Azure DevOps iterations, sprints, boards, and team settings through the API.
 """
 
-from typing import Any, Dict, List, Optional
 import json
+from typing import Any, Dict, List, Optional
 
+from azure.devops.v7_1.work.models import TeamContext
 from langchain_core.tools import tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
 
 @tool
-def get_team_iterations(project_name: str, team_name: str) -> str:
+def get_team_iterations(project_name: str, team_name: str, timeframe: Optional[str] = None) -> str:
     """
     Get all iterations for a team.
 
     Args:
         project_name (str): The name of the project
         team_name (str): The name of the team
+        timeframe (Optional[str]): A filter for which iterations are returned based on relative time. Only "current" is supported currently.
 
     Returns:
         str: JSON string containing all iterations for the team
@@ -29,9 +31,8 @@ def get_team_iterations(project_name: str, team_name: str) -> str:
         work_client = client.get_client("work")
 
         # Get iterations
-        iterations = work_client.get_team_iterations(
-            team_context={"project": project_name, "team": team_name}
-        )
+        context = TeamContext(project=project_name, team=team_name)
+        iterations = work_client.get_team_iterations(team_context=context, timeframe=timeframe)
 
         # Format for display
         formatted_iterations = []
@@ -39,7 +40,6 @@ def get_team_iterations(project_name: str, team_name: str) -> str:
             formatted_iteration = {
                 "id": iteration.id,
                 "name": iteration.name,
-                "path": iteration.path,
                 "attributes": {
                     "start_date": iteration.attributes.start_date.isoformat()
                     if iteration.attributes.start_date
@@ -47,7 +47,6 @@ def get_team_iterations(project_name: str, team_name: str) -> str:
                     "finish_date": iteration.attributes.finish_date.isoformat()
                     if iteration.attributes.finish_date
                     else None,
-                    "time_frame": iteration.attributes.time_frame,
                 }
                 if iteration.attributes
                 else None,
@@ -77,9 +76,8 @@ def get_team_current_iteration(project_name: str, team_name: str) -> str:
         work_client = client.get_client("work")
 
         # Get current iteration
-        iterations = work_client.get_team_iterations(
-            team_context={"project": project_name, "team": team_name}, timeframe="current"
-        )
+        context = TeamContext(project=project_name, team=team_name)
+        iterations = work_client.get_team_iterations(team_context=context, timeframe="current")
 
         if not iterations:
             return json.dumps({"message": "No current iteration found"})
@@ -252,46 +250,29 @@ def create_iteration(
         str: JSON string containing the created iteration details
     """
     try:
-        client = get_azure_devops_client()
-        work_client = client.get_client("work")
-
-        # Create iteration document
-        iteration_document = {"name": name}
-
-        # Add path if provided
-        if path:
-            iteration_document["path"] = path
-
-        # Add dates if provided
+        # Prepare attributes if dates are provided
+        attributes = None
         if start_date or finish_date:
-            iteration_document["attributes"] = {}
+            attributes = {}
             if start_date:
-                iteration_document["attributes"]["startDate"] = start_date
+                attributes["startDate"] = start_date
             if finish_date:
-                iteration_document["attributes"]["finishDate"] = finish_date
+                attributes["finishDate"] = finish_date
 
-        # Create iteration
-        iteration = work_client.create_iteration(iteration_document, project=project_name)
+        client = get_azure_devops_client()
+        wit_client = client.get_client("work_item_tracking")
 
-        # Format for display
-        formatted_iteration = {
-            "id": iteration.id,
-            "name": iteration.name,
-            "path": iteration.path,
-            "attributes": {
-                "start_date": iteration.attributes.start_date.isoformat()
-                if iteration.attributes and iteration.attributes.start_date
-                else None,
-                "finish_date": iteration.attributes.finish_date.isoformat()
-                if iteration.attributes and iteration.attributes.finish_date
-                else None,
-            }
-            if iteration.attributes
-            else None,
-            "url": iteration.url,
-        }
+        # Create the node data
+        from azure.devops.v7_1.work_item_tracking.models import WorkItemClassificationNode
 
-        return json.dumps(formatted_iteration, indent=2)
+        node = WorkItemClassificationNode(name=name, structure_type="iteration")
+        # Add attributes if provided
+        if attributes:
+            node.attributes = attributes
+
+        return wit_client.create_or_update_classification_node(
+            posted_node=node, project=project_name, structure_group="iterations", path=path
+        )
     except Exception as e:
         return f"Error creating iteration: {str(e)}"
 

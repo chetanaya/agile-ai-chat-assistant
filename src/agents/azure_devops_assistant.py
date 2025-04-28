@@ -20,8 +20,8 @@ from agents.azure_devops.processes import process_and_team_tools
 from agents.azure_devops.projects import project_tools
 from agents.azure_devops.search_tools import search_tools
 from agents.azure_devops.work import work_tools
+from agents.azure_devops.work_item_tracking import work_item_tools
 from agents.azure_devops.work_item_tracking_process import work_item_tracking_process_tools
-from agents.azure_devops.work_items import work_item_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -105,7 +105,10 @@ instructions = f"""
     - remove_tag_from_work_item(work_item_id, tag) - Remove a tag from a work item
     - get_work_item_templates(project_name, team) - Get work item templates
     - create_work_item_from_template(project_name, template_id) - Create from template
-    - get_work_item_classification_nodes(project_name, structure_type) - Get area/iteration paths
+    - get_classification_node(project_name, structure_type, path, depth) - Get a classification node
+    - get_classification_nodes(project_name, structure_type, ids, depth) - Get multiple classification nodes
+    - create_or_update_classification_node(project_name, structure_type, name, path, structure_group, attributes) - Create/update a node
+    - delete_classification_node(project_name, structure_type, path, reclassify_id) - Delete a classification node
     
     Git Repository Functions:
     - get_repositories(project_name) - Get all repositories in a project

@@ -1278,17 +1278,50 @@ def create_work_item_from_template(
 
 
 @tool
-def get_work_item_classification_nodes(
-    project_name: str, structure_type: str, path: Optional[str] = None, depth: int = 2
+def get_classification_node(
+    project_name: str, structure_type: str, path: Optional[str] = None, depth: Optional[int] = None
 ) -> str:
     """
-    Get work item classification nodes (areas or iterations).
+    Get a classification node for a given project and path.
 
     Args:
         project_name (str): The name of the project
-        structure_type (str): The type of structure ('areas' or 'iterations')
-        path (Optional[str]): The path of the classification node (optional)
-        depth (int): The depth of children to fetch
+        structure_type (str): The classification structure type (area or iteration)
+        path (Optional[str]): The path of the classification node, can be optional
+        depth (Optional[int]): Depth of children to fetch
+
+    Returns:
+        str: JSON string containing the classification node
+    """
+    try:
+        client = get_azure_devops_client()
+        wit_client = client.get_client("work_item_tracking")
+
+        # Get the classification node
+        node = wit_client.get_classification_node(
+            project=project_name, structure_type=structure_type, path=path, depth=depth
+        )
+
+        # Format the node for display
+        formatted_node = format_node(node)
+
+        return json.dumps(formatted_node, indent=2)
+    except Exception as e:
+        return f"Error retrieving classification node: {str(e)}"
+
+
+@tool
+def get_classification_nodes(
+    project_name: str, structure_type: str, ids: Optional[list] = None, depth: Optional[int] = None
+) -> str:
+    """
+    Get multiple classification nodes for a given project.
+
+    Args:
+        project_name (str): The name of the project
+        structure_type (str): The classification structure type (area or iteration)
+        ids (Optional[list]): List of node IDs to fetch, if not provided gets root nodes
+        depth (Optional[int]): Depth of children to fetch
 
     Returns:
         str: JSON string containing the classification nodes
@@ -1297,35 +1330,126 @@ def get_work_item_classification_nodes(
         client = get_azure_devops_client()
         wit_client = client.get_client("work_item_tracking")
 
-        # Validate structure type
-        if structure_type.lower() not in ["areas", "iterations"]:
-            return "Error: structure_type must be either 'areas' or 'iterations'"
-
-        # Get classification nodes
-        nodes = wit_client.get_classification_node(
-            project=project_name, structure_type=structure_type.lower(), path=path, depth=depth
+        # Get the classification nodes
+        nodes = wit_client.get_classification_nodes(
+            project=project_name, structure_type=structure_type, ids=ids, depth=depth
         )
 
-        # Format for display
-        def format_node(node):
-            formatted = {
-                "id": node.id,
-                "name": node.name,
-                "path": node.path,
-                "url": node.url,
-            }
+        # Format the nodes for display
+        formatted_nodes = []
+        for node in nodes:
+            formatted_nodes.append(format_node(node))
 
-            # Add children if they exist
-            if hasattr(node, "children") and node.children:
-                formatted["children"] = [format_node(child) for child in node.children]
-
-            return formatted
-
-        formatted_result = format_node(nodes)
-
-        return json.dumps(formatted_result, indent=2)
+        return json.dumps({"count": len(formatted_nodes), "nodes": formatted_nodes}, indent=2)
     except Exception as e:
         return f"Error retrieving classification nodes: {str(e)}"
+
+
+@tool
+def create_or_update_classification_node(
+    project_name: str,
+    structure_type: str,
+    name: str,
+    structure_group: str,
+    path: Optional[str] = None,
+    attributes: Optional[Dict[str, Any]] = None,
+) -> str:
+    """
+    Create or update a classification node in a project.
+
+    Args:
+        project_name (str): The name of the project
+        structure_type (str): The classification structure type (area or iteration)
+        name (str): The name of the classification node
+        structure_group (str): Structure group of the classification node, areas or iterations.
+        path (Optional[str]): The path where to create/update the node
+        attributes (Optional[Dict[str, Any]]): Node attributes (like startDate and finishDate for iterations)
+
+    Returns:
+        str: JSON string containing the created/updated classification node
+    """
+    try:
+        client = get_azure_devops_client()
+        wit_client = client.get_client("work_item_tracking")
+
+        # Create the node data
+        from azure.devops.v7_1.work_item_tracking.models import WorkItemClassificationNode
+
+        node = WorkItemClassificationNode(name=name, structure_type=structure_type)
+
+        # Add attributes if provided
+        if attributes:
+            node.attributes = attributes
+
+        # Create or update the node
+        updated_node = wit_client.create_or_update_classification_node(
+            posted_node=node, project=project_name, structure_group=structure_group, path=path
+        )
+
+        # Format the node for display
+        formatted_node = format_node(updated_node)
+
+        return json.dumps(formatted_node, indent=2)
+    except Exception as e:
+        return f"Error creating/updating classification node: {str(e)}"
+
+
+@tool
+def delete_classification_node(
+    project_name: str,
+    structure_type: str,
+    path: Optional[str] = None,
+    reclassify_id: Optional[int] = None,
+) -> str:
+    """
+    Delete a classification node from a project.
+
+    Args:
+        project_name (str): The name of the project
+        structure_type (str): The classification structure type (area or iteration)
+        path (Optional[str]): The path of the classification node to delete
+        reclassify_id (Optional[int]): ID of the node to reclassify work items to
+
+    Returns:
+        str: JSON string containing the result of the operation
+    """
+    try:
+        client = get_azure_devops_client()
+        wit_client = client.get_client("work_item_tracking")
+
+        # Delete the node
+        wit_client.delete_classification_node(
+            project=project_name,
+            structure_type=structure_type,
+            path=path,
+            reclassify_id=reclassify_id,
+        )
+
+        # Format the result for display
+        result = {
+            "message": f"Classification node at path '{path if path else 'root'}' of type '{structure_type}' has been deleted",
+            "success": True,
+        }
+
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        return f"Error deleting classification node: {str(e)}"
+
+
+def format_node(node):
+    """Helper function to format a classification node for display"""
+    formatted = {
+        "id": node.id,
+        "name": node.name,
+        "path": node.path,
+        "url": node.url,
+    }
+
+    # Add children if they exist
+    if hasattr(node, "children") and node.children:
+        formatted["children"] = [format_node(child) for child in node.children]
+
+    return formatted
 
 
 # Export the tools for use in the Azure DevOps assistant
@@ -1356,5 +1480,8 @@ work_item_tools = [
     remove_tag_from_work_item,
     get_work_item_templates,
     create_work_item_from_template,
-    get_work_item_classification_nodes,
+    get_classification_node,
+    get_classification_nodes,
+    create_or_update_classification_node,
+    delete_classification_node,
 ]
