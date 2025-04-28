@@ -40,68 +40,92 @@ class AzureDevOpsClient:
         credentials = BasicAuthentication("", self.azure_devops_pat)
         self.connection = Connection(base_url=self.azure_devops_org_url, creds=credentials)
 
-    def get_client(self):
+    def get_client(self, client_type: str = "core"):
         """
-        Get a specific Azure DevOps client.
+        Get any Azure DevOps client dynamically by type name.
+
+        Args:
+            client_type (str): The type of client to get (e.g., 'git', 'work', 'core', etc.)
+                               Default is 'core'
 
         Returns:
             Client: The requested Azure DevOps client
-        """
-        return self.connection.clients_v7_1.get_core_client()
 
-    def get_work_item_tracking_client(self):
+        Raises:
+            AttributeError: If the requested client type doesn't exist
         """
-        Get a specific Azure DevOps client.
+        # Convert client_type to the method name in the Azure DevOps SDK
+        method_name = f"get_{client_type}_client"
 
-        Returns:
-            Client: The requested Azure DevOps client
-        """
-        return self.connection.clients_v7_1.get_work_item_tracking_client()
+        # Check if the method exists in the clients collection
+        if not hasattr(self.connection.clients_v7_1, method_name):
+            raise AttributeError(f"Client type '{client_type}' is not supported")
 
-    def get_work_client(self):
-        """
-        Get the Azure DevOps Work client for iterations, backlogs, and boards.
+        # Dynamically call the method
+        return getattr(self.connection.clients_v7_1, method_name)()
 
-        Returns:
-            Client: The Azure DevOps Work client
-        """
-        return self.connection.clients_v7_1.get_work_client()
+    # def get_core_client(self):
+    #     """
+    #     Get a specific Azure DevOps client.
 
-    def get_work_item_tracking_process_client(self):
-        """
-        Get the Azure DevOps Work client for iterations, backlogs, and boards.
+    #     Returns:
+    #         Client: The requested Azure DevOps client
+    #     """
+    #     return self.connection.clients_v7_1.get_core_client()
 
-        Returns:
-            Client: The Azure DevOps Work client
-        """
-        return self.connection.clients_v7_1.get_work_item_tracking_process_client()
+    # def get_work_item_tracking_client(self):
+    #     """
+    #     Get a specific Azure DevOps client.
 
-    def get_git_client(self):
-        """
-        Get the Azure DevOps Git client.
+    #     Returns:
+    #         Client: The requested Azure DevOps client
+    #     """
+    #     return self.connection.clients_v7_1.get_work_item_tracking_client()
 
-        Returns:
-            Client: The Azure DevOps Git client
-        """
-        return self.connection.clients_v7_1.get_git_client()
+    # def get_work_client(self):
+    #     """
+    #     Get the Azure DevOps Work client for iterations, backlogs, and boards.
 
-    def get_profile_client(self):
-        """
-        Get the Azure DevOps Profile client.
+    #     Returns:
+    #         Client: The Azure DevOps Work client
+    #     """
+    #     return self.connection.clients_v7_1.get_work_client()
 
-        Returns:
-            Client: The Azure DevOps Profile client
-        """
-        return self.connection.clients_v7_1.get_profile_client()
+    # def get_work_item_tracking_process_client(self):
+    #     """
+    #     Get the Azure DevOps Work client for iterations, backlogs, and boards.
 
-    def get_search_client(self):
-        """
-        Get the Azure DevOps Search client.
+    #     Returns:
+    #         Client: The Azure DevOps Work client
+    #     """
+    #     return self.connection.clients_v7_1.get_work_item_tracking_process_client()
 
-        Returns:
-            Client: The Azure DevOps Search client
-        """
-        return self.connection.clients_v7_1.get_search_client()
+    # def get_git_client(self):
+    #     """
+    #     Get the Azure DevOps Git client.
+
+    #     Returns:
+    #         Client: The Azure DevOps Git client
+    #     """
+    #     return self.connection.clients_v7_1.get_git_client()
+
+    # def get_profile_client(self):
+    #     """
+    #     Get the Azure DevOps Profile client.
+
+    #     Returns:
+    #         Client: The Azure DevOps Profile client
+    #     """
+    #     return self.connection.clients_v7_1.get_profile_client()
+
+    # def get_search_client(self):
+    #     """
+    #     Get the Azure DevOps Search client.
+
+    #     Returns:
+    #         Client: The Azure DevOps Search client
+    #     """
+    #     return self.connection.clients_v7_1.get_search_client()
 
     def handle_response_error(self, error):
         """

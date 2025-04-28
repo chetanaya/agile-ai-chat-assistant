@@ -22,7 +22,7 @@ def get_processes() -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get processes
         processes = process_client.get_list_of_processes()
@@ -61,7 +61,7 @@ def get_process(process_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get process
         process = process_client.get_process_by_id(process_id)
@@ -95,7 +95,7 @@ def get_process_work_item_types(process_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get work item types
         work_item_types = process_client.get_work_item_types(process_id)
@@ -137,7 +137,7 @@ def get_process_work_item_type(process_id: str, wit_ref_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get work item type
         wit = process_client.get_work_item_type(process_id, wit_ref_name)
@@ -174,7 +174,7 @@ def get_states(process_id: str, wit_ref_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get states
         states = process_client.get_states(process_id, wit_ref_name)
@@ -213,7 +213,7 @@ def get_state(process_id: str, wit_ref_name: str, state_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get state
         state = process_client.get_state(process_id, wit_ref_name, state_id)
@@ -261,7 +261,7 @@ def create_state(
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Create state model
         state_model = {
@@ -324,7 +324,7 @@ def update_state(
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Create state update model
         state_model = {}
@@ -382,7 +382,7 @@ def delete_state(process_id: str, wit_ref_name: str, state_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Delete state
         process_client.delete_state(process_id, wit_ref_name, state_id)
@@ -412,7 +412,7 @@ def get_work_item_type_states(project_name: str, type: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         states = wit_client.get_work_item_type_states(project_name, type)
 
@@ -442,7 +442,7 @@ def get_process_work_item_type_fields(process_id: str, wit_ref_name: str) -> str
     """
     try:
         client = get_azure_devops_client()
-        process_client = client.get_work_item_tracking_process_client()
+        process_client = client.get_client("work_item_tracking_process")
 
         # Get fields
         fields = process_client.get_work_item_type_fields(process_id, wit_ref_name)

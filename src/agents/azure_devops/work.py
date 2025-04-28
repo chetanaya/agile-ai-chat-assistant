@@ -26,7 +26,7 @@ def get_team_iterations(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get iterations
         iterations = work_client.get_team_iterations(
@@ -74,7 +74,7 @@ def get_team_current_iteration(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current iteration
         iterations = work_client.get_team_iterations(
@@ -128,7 +128,7 @@ def add_team_iteration(project_name: str, team_name: str, iteration_id: str) -> 
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Add iteration
         team_iteration = work_client.post_team_iteration(
@@ -174,7 +174,7 @@ def remove_team_iteration(project_name: str, team_name: str, iteration_id: str) 
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Remove iteration
         work_client.delete_team_iteration(
@@ -199,7 +199,7 @@ def get_project_iterations(project_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get iterations
         iterations = work_client.get_iterations(project=project_name)
@@ -253,7 +253,7 @@ def create_iteration(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Create iteration document
         iteration_document = {"name": name}
@@ -310,7 +310,7 @@ def get_team_backlog(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get backlog configuration
         backlog_config = work_client.get_backlog_configurations(
@@ -390,7 +390,7 @@ def get_team_settings(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get team settings
         team_settings = work_client.get_team_settings(
@@ -450,7 +450,7 @@ def update_team_settings(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current settings
         current_settings = work_client.get_team_settings(
@@ -521,7 +521,7 @@ def get_team_board(project_name: str, team_name: str, board_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board
         board = work_client.get_board(
@@ -550,7 +550,7 @@ def get_team_boards(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get boards
         boards = work_client.get_boards(team_context={"project": project_name, "team": team_name})
@@ -580,7 +580,7 @@ def get_board_columns(project_name: str, team_name: str, board_name: str) -> str
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board columns
         columns = work_client.get_columns(
@@ -621,7 +621,7 @@ def get_board_work_items(project_name: str, team_name: str, board_name: str) -> 
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board work items
         board_items = work_client.get_board_card_settings(
@@ -677,7 +677,7 @@ def get_team_capacity(project_name: str, team_name: str, iteration_id: str) -> s
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get team capacity
         capacities = work_client.get_capacities(
@@ -734,8 +734,8 @@ def get_iteration_work_items(project_name: str, team_name: str, iteration_id: st
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
-        wit_client = client.get_work_item_tracking_client()
+        work_client = client.get_client("work")
+        wit_client = client.get_client("work_item_tracking")
 
         # Get iteration work items
         work_item_refs = work_client.get_iteration_work_items(
@@ -783,7 +783,7 @@ def get_backlogs(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get backlogs
         backlogs = work_client.get_backlogs(
@@ -823,8 +823,8 @@ def get_backlog_items(project_name: str, team_name: str, backlog_id: str) -> str
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
-        wit_client = client.get_work_item_tracking_client()
+        work_client = client.get_client("work")
+        wit_client = client.get_client("work_item_tracking")
 
         # Get backlog work items
         backlog_work_items = work_client.get_backlog_level_work_items(
@@ -878,7 +878,7 @@ def get_single_backlog(project_name: str, team_name: str, backlog_id: str) -> st
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get backlog
         backlog = work_client.get_backlog(
@@ -920,7 +920,7 @@ def get_backlog_levels(project_name: str, team_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get backlog configuration
         backlog_config = work_client.get_backlog_configurations(
@@ -993,7 +993,7 @@ def update_backlog_item_position(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Validate input
         if successor_id is None and predecessor_id is None:
@@ -1042,7 +1042,7 @@ def get_backlog_work_items_with_hierarchy(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get backlog work items with hierarchy
         backlog_work_items = work_client.get_backlog_level_work_items(
@@ -1103,7 +1103,7 @@ def update_board_columns(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Update board columns
         updated_columns = work_client.update_columns(
@@ -1152,7 +1152,7 @@ def update_board_card_settings(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Update board card settings
         updated_settings = work_client.update_board_card_settings(
@@ -1216,7 +1216,7 @@ def create_board(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Create board object
         board_data = {"name": name}
@@ -1262,7 +1262,7 @@ def get_board_chart(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board chart
         chart = work_client.get_chart(
@@ -1298,7 +1298,7 @@ def get_board_charts(project_name: str, team_name: str, board_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board charts
         charts = work_client.get_charts(
@@ -1337,7 +1337,7 @@ def get_card_field_settings(project_name: str, team_name: str, board_name: str) 
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get card field settings
         settings = work_client.get_board_card_settings(
@@ -1388,7 +1388,7 @@ def update_card_field_settings(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Prepare settings object
         settings_data = {"cards": {"fields": field_settings}}
@@ -1436,7 +1436,7 @@ def get_board_rows(project_name: str, team_name: str, board_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get board rows
         rows = work_client.get_rows(
@@ -1482,7 +1482,7 @@ def update_board_rows(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Update board rows
         updated_rows = work_client.update_rows(
@@ -1520,7 +1520,7 @@ def get_plans(project_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get all plans
         plans = work_client.get_plans(project=project_name)
@@ -1565,7 +1565,7 @@ def get_plan(project_name: str, plan_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get plan
         plan = work_client.get_plan(project=project_name, plan_id=plan_id)
@@ -1620,7 +1620,7 @@ def create_plan(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Create plan object
         plan_data = {
@@ -1677,7 +1677,7 @@ def update_plan(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current plan
         current_plan = work_client.get_plan(project=project_name, plan_id=plan_id)
@@ -1737,7 +1737,7 @@ def delete_plan(project_name: str, plan_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Delete the plan
         work_client.delete_plan(project=project_name, plan_id=plan_id)
@@ -1771,7 +1771,7 @@ def get_delivery_timeline_data(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Prepare timeline request
         timeline_request = {}
@@ -1857,7 +1857,7 @@ def add_team_to_plan(project_name: str, plan_id: str, team_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current plan to update its properties
         current_plan = work_client.get_plan(project=project_name, plan_id=plan_id)
@@ -1916,7 +1916,7 @@ def remove_team_from_plan(project_name: str, plan_id: str, team_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current plan to update its properties
         current_plan = work_client.get_plan(project=project_name, plan_id=plan_id)
@@ -1996,7 +1996,7 @@ def configure_plan_settings(
     """
     try:
         client = get_azure_devops_client()
-        work_client = client.get_work_client()
+        work_client = client.get_client("work")
 
         # Get current plan to update its properties
         current_plan = work_client.get_plan(project=project_name, plan_id=plan_id)

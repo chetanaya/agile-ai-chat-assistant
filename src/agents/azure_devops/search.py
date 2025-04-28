@@ -23,7 +23,7 @@ def get_search_client():
         Client: The Azure DevOps Search client
     """
     client = get_azure_devops_client()
-    return client.connection.clients_v7_1.get_search_client()
+    return client.get_client("search")
 
 
 def search_code(

@@ -30,7 +30,7 @@ def get_work_item(work_item_id: int) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get work item with all fields
         work_item = wit_client.get_work_item(work_item_id, expand="All")
@@ -84,7 +84,7 @@ def create_work_item(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create document for json patch operations
         document = []
@@ -163,7 +163,7 @@ def update_work_item(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create document for json patch operations
         document = []
@@ -242,7 +242,7 @@ def get_work_items_by_wiql(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Ensure query starts with SELECT
         if not query.strip().upper().startswith("SELECT"):
@@ -304,7 +304,7 @@ def get_work_item_types(project_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         work_item_types = wit_client.get_work_item_types(project_name)
 
@@ -344,7 +344,7 @@ def add_comment_to_work_item(work_item_id: int, project: str, comment: str) -> s
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create a CommentCreate object instead of a dictionary
         comment_obj = CommentCreate(text=comment)
@@ -387,7 +387,7 @@ def get_work_item_comments(project: str, work_item_id: int) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get comments
         comments = wit_client.get_comments(project, work_item_id)
@@ -429,7 +429,7 @@ def delete_work_item_comment(project: str, work_item_id: int, comment_id: int) -
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Delete the comment
         wit_client.delete_comment(project, work_item_id, comment_id)
@@ -461,7 +461,7 @@ def update_work_item_comment(project: str, work_item_id: int, comment_id: int, t
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create a CommentUpdate object
         comment_update = CommentUpdate(text=text)
@@ -514,7 +514,7 @@ def get_work_item_updates(work_item_id: int) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get updates
         updates = wit_client.get_updates(work_item_id)
@@ -557,7 +557,7 @@ def get_work_item_attachments(work_item_id: int) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get work item with all fields
         work_item = wit_client.get_work_item(work_item_id, expand="Relations")
@@ -606,7 +606,7 @@ def create_work_item_relation(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Map relation type to API relation string
         relation_map = {
@@ -660,7 +660,7 @@ def delete_work_item(work_item_id: int, permanent: bool = False) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Delete the work item
         result = wit_client.delete_work_item(id=work_item_id, destroy=permanent)
@@ -695,7 +695,7 @@ def add_attachment_to_work_item(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Read the file contents
         import os
@@ -759,7 +759,7 @@ def get_work_item_query_result(project_name: str, query_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Run the saved query
         query_result = wit_client.query_by_id(query_id, project=project_name)
@@ -806,7 +806,7 @@ def get_queries(project_name: str, query_path: Optional[str] = None) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get queries from the specified path
         queries = wit_client.get_queries(project_name, query_path, depth=2)
@@ -853,7 +853,7 @@ def create_query(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Ensure query starts with SELECT
         if not query_string.strip().upper().startswith("SELECT"):
@@ -900,7 +900,7 @@ def delete_query(project_name: str, query_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Delete the query
         wit_client.delete_query(project_name, query_id)
@@ -927,7 +927,7 @@ def get_work_item_revisions(work_item_id: int, top: int = 10) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get revisions
         revisions = wit_client.get_revisions(work_item_id, top=top)
@@ -977,7 +977,7 @@ def get_work_item_revision(work_item_id: int, revision_number: int) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get the specific revision
         revision = wit_client.get_revision(work_item_id, revision_number)
@@ -1019,7 +1019,7 @@ def get_work_item_tags(project_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get all tags in the project
         tags = wit_client.get_tags(project_name)
@@ -1053,7 +1053,7 @@ def create_work_item_tag(project_name: str, tag_name: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create the tag
         tag = wit_client.create_tag(project_name, tag_name)
@@ -1084,7 +1084,7 @@ def add_tag_to_work_item(work_item_id: int, tag: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get current work item to check if it already has the tag
         work_item = wit_client.get_work_item(work_item_id)
@@ -1140,7 +1140,7 @@ def remove_tag_from_work_item(work_item_id: int, tag: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Get current work item to check if it has the tag
         work_item = wit_client.get_work_item(work_item_id)
@@ -1204,7 +1204,7 @@ def get_work_item_templates(project_name: str, team: Optional[str] = None) -> st
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # If team is provided, get templates for that specific team
         if team:
@@ -1249,7 +1249,7 @@ def create_work_item_from_template(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Create work item from template
         document = []
@@ -1295,7 +1295,7 @@ def get_work_item_classification_nodes(
     """
     try:
         client = get_azure_devops_client()
-        wit_client = client.get_work_item_tracking_client()
+        wit_client = client.get_client("work_item_tracking")
 
         # Validate structure type
         if structure_type.lower() not in ["areas", "iterations"]:

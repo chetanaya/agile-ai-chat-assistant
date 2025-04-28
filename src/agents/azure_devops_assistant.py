@@ -163,6 +163,12 @@ instructions = f"""
     - update_state(process_id, wit_ref_name, state_id, name, color) - Update a state
     - delete_state(process_id, wit_ref_name, state_id) - Delete a state
     - get_process_work_item_type_fields(process_id, wit_ref_name) - Get all fields for a work item type
+    
+    Profile Management Functions:
+    - get_my_profile() - Get profile details of the authenticated user
+    - get_profile(user_id) - Get profile details of a specific user by ID
+    - get_profiles(profile_ids) - Get profiles for multiple users by their IDs
+    - update_profile(display_name, email_address, contact_with_offers) - Update authenticated user's profile
 
     Implementation Strategy:
     1. Always identify the exact entities needed for an operation
@@ -177,12 +183,6 @@ instructions = f"""
     - Execute operations sequentially with verification
     - Provide a summary of all completed actions
 """
-
-# Profile Management Functions:
-# - get_my_profile() - Get profile details of the authenticated user
-# - get_profile(user_id) - Get profile details of a specific user by ID
-# - get_profiles(profile_ids) - Get profiles for multiple users by their IDs
-# - update_profile(display_name, email_address, contact_with_offers) - Update authenticated user's profile
 
 
 def wrap_model(model: BaseChatModel) -> RunnableSerializable[AgentState, AIMessage]:

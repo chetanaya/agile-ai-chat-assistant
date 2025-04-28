@@ -23,7 +23,7 @@ def get_my_profile() -> str:
     """
     try:
         client = get_azure_devops_client()
-        profile_client = client.get_profile_client()
+        profile_client = client.get_client("profile")
 
         # Get the authenticated user's profile
         my_profile = profile_client.get_profile(id="me", details=True)
@@ -56,7 +56,7 @@ def get_profile(user_id: str) -> str:
     """
     try:
         client = get_azure_devops_client()
-        profile_client = client.get_profile_client()
+        profile_client = client.get_client("profile")
 
         # Get the profile of the specified user
         profile = profile_client.get_profile_with_attributes(user_id)
@@ -91,7 +91,7 @@ def get_profiles(profile_ids: list) -> str:
     """
     try:
         client = get_azure_devops_client()
-        profile_client = client.get_profile_client()
+        profile_client = client.get_client("profile")
 
         # Get profiles for the specified users
         profiles = profile_client.get_profiles_with_attributes(profile_ids)
@@ -136,7 +136,7 @@ def update_profile(
     """
     try:
         client = get_azure_devops_client()
-        profile_client = client.get_profile_client()
+        profile_client = client.get_client("profile")
 
         # Get current profile to use as a base for the update
         current_profile = profile_client.get_profile()
