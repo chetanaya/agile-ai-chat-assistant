@@ -220,13 +220,21 @@ def update_work_item(
 
 
 @tool
-def get_work_items_by_wiql(project_name: str, query: str, top: int = 100) -> str:
+def get_work_items_by_wiql(
+    project_name: str,
+    query: str,
+    team_name: Optional[str] = None,
+    time_precision: Optional[bool] = None,
+    top: int = 100,
+) -> str:
     """
     Query work items using WIQL (Work Item Query Language).
 
     Args:
         project_name (str): The name of the project
         query (str): The WIQL query string
+        team_name (Optional[str]): The name of the team (optional)
+        time_precision (Optional[bool]): Whether to use time precision in dates
         top (int, optional): Maximum number of results to return
 
     Returns:
@@ -243,8 +251,17 @@ def get_work_items_by_wiql(project_name: str, query: str, top: int = 100) -> str
         # Create WIQL object
         wiql = {"query": query}
 
+        # Create team_context if team_name is provided
+        team_context = None
+        if team_name:
+            from azure.devops.v7_1.work_item_tracking.models import TeamContext
+
+            team_context = TeamContext(project=project_name, team=team_name)
+
         # Run query
-        query_result = wit_client.query_by_wiql(wiql, project=project_name, top=top)
+        query_result = wit_client.query_by_wiql(
+            wiql=wiql, team_context=team_context, time_precision=time_precision, top=top
+        )
 
         # If no work items found
         if not query_result.work_items:

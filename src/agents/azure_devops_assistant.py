@@ -83,7 +83,7 @@ instructions = f"""
     - get_work_item(work_item_id) - Get details of a specific work item
     - create_work_item(project_name, work_item_type, title, description, assigned_to) - Create a work item
     - update_work_item(work_item_id, title, description, assigned_to, state) - Update a work item
-    - get_work_items_by_wiql(project_name, query) - Query work items using WIQL
+    - get_work_items_by_wiql(project_name, query, team_name, time_precision, top) - Query work items using WIQL
     - get_work_item_types(project_name) - Get all work item types in a project
     - add_comment_to_work_item(work_item_id, project, comment) - Add a comment to a work item
     - get_work_item_comments(work_item_id) - Get all comments for a work item
