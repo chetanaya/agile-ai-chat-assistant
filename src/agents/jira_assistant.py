@@ -28,6 +28,7 @@ from agents.jira.sprints import sprint_tools
 from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
+from schema.models import OpenAIModelName
 
 
 class AgentState(MessagesState, total=False):
@@ -192,11 +193,12 @@ def format_safety_message(safety: LlamaGuardOutput) -> AIMessage:
 
 
 async def acall_model(state: AgentState, config: RunnableConfig) -> AgentState:
-    m = get_model(config["configurable"].get("model", settings.DEFAULT_MODEL))
+    # Use OpenAI model directly instead of configurable model
+    m = get_model(OpenAIModelName.GPT_4O_MINI)
     model_runnable = wrap_model(m)
     response = await model_runnable.ainvoke(state, config)
 
-    # Run llama guard check here to avoid returning the message if it's unsafe
+    # Run content moderation check here to avoid returning the message if it's unsafe
     llama_guard = LlamaGuard()
     safety_output = await llama_guard.ainvoke("Agent", state["messages"] + [response])
     if safety_output.safety_assessment == SafetyAssessment.UNSAFE:
