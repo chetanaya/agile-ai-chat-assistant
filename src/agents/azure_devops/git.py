@@ -4,10 +4,9 @@ Azure DevOps Git Repositories API Functions
 This module provides tools for interacting with Azure DevOps Git repositories through the API.
 """
 
-from typing import Any, Dict, List, Optional, Union
 import json
 
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
@@ -86,7 +85,7 @@ def get_repository(project_name: str, repository_name: str) -> str:
 
 @tool
 def create_repository(
-    project_name: str, repository_name: str, description: Optional[str] = None
+    project_name: str, repository_name: str, description: str | None = None
 ) -> str:
     """
     Create a new Git repository in a project.
@@ -132,7 +131,7 @@ def create_repository(
 
 @tool
 def get_branches(
-    project_name: str, repository_name: str, search_criteria: Optional[str] = None
+    project_name: str, repository_name: str, search_criteria: str | None = None
 ) -> str:
     """
     Get branches in a repository, optionally filtered by search criteria.
@@ -179,7 +178,7 @@ def get_branches(
 
 @tool
 def get_commits(
-    project_name: str, repository_name: str, branch_name: Optional[str] = None, top: int = 20
+    project_name: str, repository_name: str, branch_name: str | None = None, top: int = 20
 ) -> str:
     """
     Get commits in a repository, optionally filtered by branch name.
@@ -307,8 +306,8 @@ def create_pull_request(
     source_branch: str,
     target_branch: str,
     title: str,
-    description: Optional[str] = None,
-    reviewers: Optional[List[str]] = None,
+    description: str | None = None,
+    reviewers: list[str] | None = None,
     is_draft: bool = False,
 ) -> str:
     """

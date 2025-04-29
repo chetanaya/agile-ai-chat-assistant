@@ -6,9 +6,8 @@ and organization-level settings through the API.
 """
 
 import json
-from typing import Any, Dict, List, Optional, Union
 
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.azure_devops.utils import get_azure_devops_client
 
@@ -81,7 +80,7 @@ def get_process_template(process_template_id: str) -> str:
 
 
 @tool
-def create_team(project_name_or_id: str, team_name: str, description: Optional[str] = None) -> str:
+def create_team(project_name_or_id: str, team_name: str, description: str | None = None) -> str:
     """
     Create a new team in a project.
 
@@ -122,8 +121,8 @@ def create_team(project_name_or_id: str, team_name: str, description: Optional[s
 def update_team(
     project_name_or_id: str,
     team_name_or_id: str,
-    new_name: Optional[str] = None,
-    new_description: Optional[str] = None,
+    new_name: str | None = None,
+    new_description: str | None = None,
 ) -> str:
     """
     Update a team's name and/or description.

@@ -5,7 +5,7 @@ This module provides tools for interacting with Azure DevOps iterations, sprints
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from azure.devops.v7_1.work.models import TeamContext
 from langchain_core.tools import tool
@@ -14,7 +14,7 @@ from agents.azure_devops.utils import get_azure_devops_client
 
 
 @tool
-def get_team_iterations(project_name: str, team_name: str, timeframe: Optional[str] = None) -> str:
+def get_team_iterations(project_name: str, team_name: str, timeframe: str | None = None) -> str:
     """
     Get all iterations for a team.
 
@@ -241,9 +241,9 @@ def get_project_iterations(project_name: str) -> str:
 def create_iteration(
     project_name: str,
     name: str,
-    start_date: Optional[str] = None,
-    finish_date: Optional[str] = None,
-    path: Optional[str] = None,
+    start_date: str | None = None,
+    finish_date: str | None = None,
+    path: str | None = None,
 ) -> str:
     """
     Create a new iteration in a project.
@@ -417,11 +417,11 @@ def get_team_settings(project_name: str, team_name: str) -> str:
 def update_team_settings(
     project_name: str,
     team_name: str,
-    backlog_iteration_id: Optional[str] = None,
-    default_iteration_id: Optional[str] = None,
-    bugs_behavior: Optional[str] = None,
-    working_days: Optional[List[str]] = None,
-    backlog_visibilities: Optional[Dict[str, bool]] = None,
+    backlog_iteration_id: str | None = None,
+    default_iteration_id: str | None = None,
+    bugs_behavior: str | None = None,
+    working_days: list[str] | None = None,
+    backlog_visibilities: dict[str, bool] | None = None,
 ) -> str:
     """
     Update settings for a team.
@@ -443,9 +443,9 @@ def update_team_settings(
         work_client = client.get_client("work")
 
         # Get current settings
-        current_settings = work_client.get_team_settings(
-            team_context={"project": project_name, "team": team_name}
-        )
+        # current_settings = work_client.get_team_settings(
+        #     team_context={"project": project_name, "team": team_name}
+        # )
 
         # Create patch document
         patch = {}
@@ -965,8 +965,8 @@ def update_backlog_item_position(
     project_name: str,
     team_name: str,
     work_item_id: int,
-    successor_id: Optional[int] = None,
-    predecessor_id: Optional[int] = None,
+    successor_id: int | None = None,
+    predecessor_id: int | None = None,
 ) -> str:
     """
     Update the position of a work item in the backlog.
@@ -1076,7 +1076,7 @@ def update_board_columns(
     project_name: str,
     team_name: str,
     board_name: str,
-    columns: List[Dict[str, Any]],
+    columns: list[dict[str, Any]],
 ) -> str:
     """
     Update columns for a team board.
@@ -1126,7 +1126,7 @@ def update_board_card_settings(
     project_name: str,
     team_name: str,
     board_name: str,
-    card_settings: Dict[str, Any],
+    card_settings: dict[str, Any],
 ) -> str:
     """
     Update card settings for a team board.
@@ -1190,7 +1190,7 @@ def create_board(
     project_name: str,
     team_name: str,
     name: str,
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> str:
     """
     Create a new board for a team.
@@ -1361,7 +1361,7 @@ def update_card_field_settings(
     project_name: str,
     team_name: str,
     board_name: str,
-    field_settings: List[Dict[str, Any]],
+    field_settings: list[dict[str, Any]],
 ) -> str:
     """
     Update card field settings for a board.
@@ -1455,7 +1455,7 @@ def update_board_rows(
     project_name: str,
     team_name: str,
     board_name: str,
-    rows: List[Dict[str, Any]],
+    rows: list[dict[str, Any]],
 ) -> str:
     """
     Update rows (swimlanes) for a team board.
@@ -1593,8 +1593,8 @@ def get_plan(project_name: str, plan_id: str) -> str:
 def create_plan(
     project_name: str,
     name: str,
-    description: Optional[str] = None,
-    properties: Optional[Dict[str, Any]] = None,
+    description: str | None = None,
+    properties: dict[str, Any] | None = None,
 ) -> str:
     """
     Create a new delivery plan.
@@ -1648,9 +1648,9 @@ def create_plan(
 def update_plan(
     project_name: str,
     plan_id: str,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    properties: Optional[Dict[str, Any]] = None,
+    name: str | None = None,
+    description: str | None = None,
+    properties: dict[str, Any] | None = None,
 ) -> str:
     """
     Update an existing delivery plan.
@@ -1744,8 +1744,8 @@ def delete_plan(project_name: str, plan_id: str) -> str:
 def get_delivery_timeline_data(
     project_name: str,
     plan_id: str,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> str:
     """
     Get the timeline data for a delivery plan.
@@ -1967,9 +1967,9 @@ def remove_team_from_plan(project_name: str, plan_id: str, team_id: str) -> str:
 def configure_plan_settings(
     project_name: str,
     plan_id: str,
-    card_settings: Optional[Dict[str, Any]] = None,
-    markers: Optional[List[Dict[str, Any]]] = None,
-    field_criteria: Optional[List[Dict[str, Any]]] = None,
+    card_settings: dict[str, Any] | None = None,
+    markers: list[dict[str, Any]] | None = None,
+    field_criteria: list[dict[str, Any]] | None = None,
 ) -> str:
     """
     Configure the settings for a delivery plan.

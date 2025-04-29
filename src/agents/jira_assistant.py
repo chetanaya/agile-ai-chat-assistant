@@ -15,14 +15,14 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
-from agents.jira.issues import issue_tools
 from agents.jira.issue_comments import comment_tools
 from agents.jira.issue_search import search_tools
 from agents.jira.issue_worklogs import worklog_tools
-from agents.jira.projects import project_tools
-from agents.jira.users import user_tools
+from agents.jira.issues import issue_tools
 from agents.jira.jql import jql_tools
 from agents.jira.permissions import permission_tools
+from agents.jira.projects import project_tools
+from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -72,12 +72,12 @@ instructions = f"""
     Permission handling:
     - Always check permissions before performing actions that might require specific permissions
     - Use get_my_permissions to check if the user has permission for specific actions
-    - For project-related actions, check project permissions first 
+    - For project-related actions, check project permissions first
     - For issue operations, verify the user has the appropriate issue permissions
     - Use check_bulk_permissions for checking multiple permissions at once
     - If permissions are missing, inform the user clearly and suggest alternatives
     - Use get_permitted_projects to find projects where the user can perform specific actions
-    
+
     Issue management:
     - For creating issues, use create_issue and verify required fields first with get_create_issue_metadata
     - For updating issues, use update_issue and check editable fields with get_edit_issue_metadata
@@ -115,7 +115,7 @@ instructions = f"""
     - Search flow: get_field_reference_data → search_issues_by_jql
     - Archive flow: search_issues_by_jql → archive_issues_by_keys
     - Permission check: get_my_permissions → [operation function]
-    
+
     Function parameter handling:
     - Always pass required parameters (e.g., issue_key, project_key)
     - For issue updates, specify only the fields that need to change
@@ -142,7 +142,7 @@ instructions = f"""
     - Use get_field_reference_data to understand available fields and operators
     - When handling errors, explain what went wrong and suggest specific corrections
     - If a function call fails, don't retry with identical parameters
-    
+
     Response formatting:
     - Present JIRA data in an organized, readable format
     - For lists of issues, use clear formatting with key details

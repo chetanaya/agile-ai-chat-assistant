@@ -4,9 +4,7 @@ JIRA Issue Search API Functions
 This module provides tools for searching JIRA issues through the REST API.
 """
 
-from typing import Any, Dict, List, Optional, Union
-
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
@@ -55,9 +53,9 @@ def search_issues(jql: str, max_results: int = 10) -> str:
 
 @tool
 def match_issues_with_jql(
-    jql_queries: List[str],
-    issue_ids: Optional[List[int]] = None,
-    issue_keys: Optional[List[str]] = None,
+    jql_queries: list[str],
+    issue_ids: list[int] | None = None,
+    issue_keys: list[str] | None = None,
 ) -> str:
     """
     Checks if issues match one or more JQL queries.
@@ -121,8 +119,8 @@ def match_issues_with_jql(
 @tool
 def get_issue_picker_suggestions(
     query: str,
-    current_project_id: Optional[str] = None,
-    current_issue_key: Optional[str] = None,
+    current_project_id: str | None = None,
+    current_issue_key: str | None = None,
     show_sub_tasks: bool = True,
     show_sub_task_parent: bool = False,
 ) -> str:
@@ -208,7 +206,7 @@ def count_issues_by_jql(jql: str) -> str:
 
 
 @tool
-def parse_jql_queries(queries: List[str], validate_only: bool = False) -> str:
+def parse_jql_queries(queries: list[str], validate_only: bool = False) -> str:
     """
     Parses and validates JQL queries and returns the results.
 

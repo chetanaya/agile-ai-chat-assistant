@@ -4,10 +4,10 @@ JIRA Issue Worklogs API Functions
 This module provides tools for interacting with JIRA issue worklogs through the REST API.
 """
 
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any
 
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
@@ -70,9 +70,9 @@ def get_issue_worklogs(issue_key: str, start_at: int = 0, max_results: int = 50)
 def add_worklog(
     issue_key: str,
     time_spent: str,
-    comment: Optional[str] = None,
-    started: Optional[str] = None,
-    visibility: Optional[Dict[str, str]] = None,
+    comment: str | None = None,
+    started: str | None = None,
+    visibility: dict[str, str] | None = None,
 ) -> str:
     """
     Adds a worklog to an issue.
@@ -91,7 +91,7 @@ def add_worklog(
     """
     client = get_jira_client()
     try:
-        data: Dict[str, Any] = {"timeSpent": time_spent}
+        data: dict[str, Any] = {"timeSpent": time_spent}
 
         # Add comment if provided
         if comment:
@@ -174,10 +174,10 @@ def get_worklog(issue_key: str, worklog_id: str) -> str:
 def update_worklog(
     issue_key: str,
     worklog_id: str,
-    time_spent: Optional[str] = None,
-    comment: Optional[str] = None,
-    started: Optional[str] = None,
-    visibility: Optional[Dict[str, str]] = None,
+    time_spent: str | None = None,
+    comment: str | None = None,
+    started: str | None = None,
+    visibility: dict[str, str] | None = None,
 ) -> str:
     """
     Updates a worklog entry for an issue.
@@ -197,7 +197,7 @@ def update_worklog(
     """
     client = get_jira_client()
     try:
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
 
         # Add time spent if provided
         if time_spent:
@@ -251,14 +251,14 @@ def delete_worklog(issue_key: str, worklog_id: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.delete(f"issue/{issue_key}/worklog/{worklog_id}")
+        client.delete(f"issue/{issue_key}/worklog/{worklog_id}")
         return f"Worklog {worklog_id} deleted successfully from issue {issue_key}"
     except Exception as e:
         return f"Error deleting worklog {worklog_id} from issue {issue_key}: {str(e)}"
 
 
 @tool
-def get_worklogs_by_ids(worklog_ids: List[str]) -> str:
+def get_worklogs_by_ids(worklog_ids: list[str]) -> str:
     """
     Returns worklog details for a list of worklog IDs.
 
@@ -297,7 +297,7 @@ def get_worklogs_by_ids(worklog_ids: List[str]) -> str:
 
 
 @tool
-def get_deleted_worklog_ids(since: Optional[int] = None) -> str:
+def get_deleted_worklog_ids(since: int | None = None) -> str:
     """
     Returns IDs of worklogs deleted since a specific timestamp.
 
@@ -343,7 +343,7 @@ def get_deleted_worklog_ids(since: Optional[int] = None) -> str:
 
 
 @tool
-def get_updated_worklog_ids(since: Optional[int] = None) -> str:
+def get_updated_worklog_ids(since: int | None = None) -> str:
     """
     Returns IDs of worklogs updated since a specific timestamp.
 
@@ -389,7 +389,7 @@ def get_updated_worklog_ids(since: Optional[int] = None) -> str:
 
 
 @tool
-def bulk_delete_worklogs(worklog_ids: List[str]) -> str:
+def bulk_delete_worklogs(worklog_ids: list[str]) -> str:
     """
     Deletes multiple worklogs in a single operation.
 
@@ -405,7 +405,7 @@ def bulk_delete_worklogs(worklog_ids: List[str]) -> str:
     client = get_jira_client()
     try:
         data = {"ids": worklog_ids}
-        response = client.delete("worklog/delete", json=data)
+        client.delete("worklog/delete", json=data)
 
         return f"Successfully deleted {len(worklog_ids)} worklogs"
     except Exception as e:
@@ -414,7 +414,7 @@ def bulk_delete_worklogs(worklog_ids: List[str]) -> str:
 
 @tool
 def bulk_move_worklogs(
-    source_issue_key: str, destination_issue_key: str, worklog_ids: List[str]
+    source_issue_key: str, destination_issue_key: str, worklog_ids: list[str]
 ) -> str:
     """
     Moves worklogs from one issue to another.
@@ -434,7 +434,7 @@ def bulk_move_worklogs(
     try:
         data = {"destinationIssueId": destination_issue_key, "worklogIds": worklog_ids}
 
-        response = client.post(f"issue/{source_issue_key}/worklog/move", data)
+        client.post(f"issue/{source_issue_key}/worklog/move", data)
 
         moved_count = len(worklog_ids)
         return f"Successfully moved {moved_count} worklogs from issue {source_issue_key} to {destination_issue_key}"

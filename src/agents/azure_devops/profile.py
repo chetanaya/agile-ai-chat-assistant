@@ -6,7 +6,6 @@ Based on the Profile client from the azure-devops-python-api library.
 """
 
 import json
-from typing import Optional
 
 from langchain_core.tools import tool
 
@@ -119,9 +118,9 @@ def get_profiles(profile_ids: list) -> str:
 
 @tool
 def update_profile(
-    display_name: Optional[str] = None,
-    email_address: Optional[str] = None,
-    contact_with_offers: Optional[bool] = None,
+    display_name: str | None = None,
+    email_address: str | None = None,
+    contact_with_offers: bool | None = None,
 ) -> str:
     """
     Update the authenticated user's profile information.

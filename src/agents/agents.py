@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from langgraph.pregel import Pregel
 
-from agents.jira_assistant import jira_assistant
 from agents.azure_devops_assistant import azure_devops_assistant
+from agents.jira_assistant import jira_assistant
 from schema import AgentInfo
 
 DEFAULT_AGENT = "jira-assistant"

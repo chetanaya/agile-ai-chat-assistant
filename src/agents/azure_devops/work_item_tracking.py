@@ -5,7 +5,7 @@ This module provides tools for interacting with Azure DevOps work items through 
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from azure.devops.v7_1.work_item_tracking.models import (
     CommentCreate,
@@ -60,11 +60,11 @@ def create_work_item(
     project_name: str,
     work_item_type: str,
     title: str,
-    description: Optional[str] = None,
-    assigned_to: Optional[str] = None,
-    state: Optional[str] = None,
-    priority: Optional[int] = None,
-    additional_fields: Optional[Dict[str, Any]] = None,
+    description: str | None = None,
+    assigned_to: str | None = None,
+    state: str | None = None,
+    priority: int | None = None,
+    additional_fields: dict[str, Any] | None = None,
 ) -> str:
     """
     Create a new work item.
@@ -139,12 +139,12 @@ def create_work_item(
 @tool
 def update_work_item(
     work_item_id: int,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    assigned_to: Optional[str] = None,
-    state: Optional[str] = None,
-    priority: Optional[int] = None,
-    additional_fields: Optional[Dict[str, Any]] = None,
+    title: str | None = None,
+    description: str | None = None,
+    assigned_to: str | None = None,
+    state: str | None = None,
+    priority: int | None = None,
+    additional_fields: dict[str, Any] | None = None,
 ) -> str:
     """
     Update an existing work item.
@@ -223,8 +223,8 @@ def update_work_item(
 def get_work_items_by_wiql(
     project_name: str,
     query: str,
-    team_name: Optional[str] = None,
-    time_precision: Optional[bool] = None,
+    team_name: str | None = None,
+    time_precision: bool | None = None,
     top: int = 100,
 ) -> str:
     """
@@ -699,7 +699,6 @@ def add_attachment_to_work_item(
 
         # Read the file contents
         import os
-        import base64
 
         if not os.path.exists(attachment_path):
             return f"Error: File {attachment_path} does not exist"
@@ -793,7 +792,7 @@ def get_work_item_query_result(project_name: str, query_id: str) -> str:
 
 
 @tool
-def get_queries(project_name: str, query_path: Optional[str] = None) -> str:
+def get_queries(project_name: str, query_path: str | None = None) -> str:
     """
     Get all queries in a project or folder.
 
@@ -1191,7 +1190,7 @@ def remove_tag_from_work_item(work_item_id: int, tag: str) -> str:
 
 
 @tool
-def get_work_item_templates(project_name: str, team: Optional[str] = None) -> str:
+def get_work_item_templates(project_name: str, team: str | None = None) -> str:
     """
     Get all work item templates for a team or project.
 
@@ -1234,7 +1233,7 @@ def get_work_item_templates(project_name: str, team: Optional[str] = None) -> st
 
 @tool
 def create_work_item_from_template(
-    project_name: str, template_id: str, additional_fields: Optional[Dict[str, Any]] = None
+    project_name: str, template_id: str, additional_fields: dict[str, Any] | None = None
 ) -> str:
     """
     Create a work item from a template.
@@ -1279,7 +1278,7 @@ def create_work_item_from_template(
 
 @tool
 def get_classification_node(
-    project_name: str, structure_group: str, path: Optional[str] = None, depth: Optional[int] = None
+    project_name: str, structure_group: str, path: str | None = None, depth: int | None = None
 ) -> str:
     """
     Get a classification node for a given project and path.
@@ -1313,9 +1312,9 @@ def get_classification_node(
 @tool
 def get_classification_nodes(
     project_name: str,
-    ids: Optional[list] = None,
-    depth: Optional[int] = None,
-    error_policy: Optional[str] = None,
+    ids: list | None = None,
+    depth: int | None = None,
+    error_policy: str | None = None,
 ) -> str:
     """
     Get multiple classification nodes for a given project.
@@ -1354,8 +1353,8 @@ def create_or_update_classification_node(
     structure_type: str,
     name: str,
     structure_group: str,
-    path: Optional[str] = None,
-    attributes: Optional[Dict[str, Any]] = None,
+    path: str | None = None,
+    attributes: dict[str, Any] | None = None,
 ) -> str:
     """
     Create or update a classification node in a project.
@@ -1401,8 +1400,8 @@ def create_or_update_classification_node(
 def delete_classification_node(
     project_name: str,
     structure_type: str,
-    path: Optional[str] = None,
-    reclassify_id: Optional[int] = None,
+    path: str | None = None,
+    reclassify_id: int | None = None,
 ) -> str:
     """
     Delete a classification node from a project.

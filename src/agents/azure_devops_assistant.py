@@ -65,7 +65,7 @@ instructions = f"""
 
     Project Management Functions:
     - get_all_projects() - List all projects in the organization
-    - get_project(project_name_or_id) - Get details of a specific project 
+    - get_project(project_name_or_id) - Get details of a specific project
     - create_project(name, description, visibility, source_control_type) - Create a new project
     - get_project_creation_status(operation_id) - Check status of project creation
     - get_project_teams(project_name_or_id) - List all teams in a project
@@ -109,7 +109,7 @@ instructions = f"""
     - get_classification_nodes(project_name, ids, depth, error_policy) - Get multiple classification nodes
     - create_or_update_classification_node(project_name, structure_type, name, path, structure_group, attributes) - Create/update a node
     - delete_classification_node(project_name, structure_type, path, reclassify_id) - Delete a classification node
-    
+
     Git Repository Functions:
     - get_repositories(project_name) - Get all repositories in a project
     - get_repository(project_name, repository_name) - Get details of a specific repository
@@ -154,7 +154,7 @@ instructions = f"""
     - search_code_repositories(search_text, project_name, repository_name, file_path, file_extension) - Search code in repositories
     - search_work_items_tool(search_text, project_name, work_item_type, state, assigned_to, created_by) - Search for work items
     - search_wiki_pages(search_text, project_name, wiki_name, path) - Search in project wikis
-    
+
     Work Item Tracking Process Functions:
     - get_processes() - Get all processes in the organization
     - get_process(process_id) - Get details of a specific process
@@ -166,7 +166,7 @@ instructions = f"""
     - update_state(process_id, wit_ref_name, state_id, name, color) - Update a state
     - delete_state(process_id, wit_ref_name, state_id) - Delete a state
     - get_process_work_item_type_fields(process_id, wit_ref_name) - Get all fields for a work item type
-    
+
     Profile Management Functions:
     - get_my_profile() - Get profile details of the authenticated user
     - get_profile(user_id) - Get profile details of a specific user by ID

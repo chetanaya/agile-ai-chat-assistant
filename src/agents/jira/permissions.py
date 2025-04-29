@@ -6,7 +6,7 @@ These endpoints help check permissions before taking actions rather than discove
 Based on: https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-permissions/
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from langchain_core.tools import tool
 
@@ -15,11 +15,11 @@ from agents.jira.utils import get_jira_client
 
 @tool
 def get_my_permissions(
-    permissions: Optional[str] = None,
-    project_key: Optional[str] = None,
-    project_id: Optional[str] = None,
-    issue_key: Optional[str] = None,
-    issue_id: Optional[str] = None,
+    permissions: str | None = None,
+    project_key: str | None = None,
+    project_id: str | None = None,
+    issue_key: str | None = None,
+    issue_id: str | None = None,
 ) -> str:
     """
     Get permissions for the current user.
@@ -101,8 +101,8 @@ def get_all_permissions() -> str:
 
 @tool
 def check_bulk_permissions(
-    global_permissions: Optional[List[str]] = None,
-    project_permissions: Optional[List[Dict[str, Any]]] = None,
+    global_permissions: list[str] | None = None,
+    project_permissions: list[dict[str, Any]] | None = None,
 ) -> str:
     """
     Check multiple permissions for the current user.
@@ -163,7 +163,7 @@ def check_bulk_permissions(
 
 
 @tool
-def get_permitted_projects(permissions: List[str]) -> str:
+def get_permitted_projects(permissions: list[str]) -> str:
     """
     Get all projects the user has specific permissions for.
 

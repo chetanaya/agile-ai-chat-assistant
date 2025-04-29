@@ -4,7 +4,7 @@ Azure DevOps Search Tools
 This module defines tools for searching in Azure DevOps.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 from langchain_core.tools import tool
 
@@ -16,10 +16,10 @@ search_tools = []
 @tool
 def search_code_repositories(
     search_text: str,
-    project_name: Optional[str] = None,
-    repository_name: Optional[str] = None,
-    file_path: Optional[str] = None,
-    file_extension: Optional[str] = None,
+    project_name: str | None = None,
+    repository_name: str | None = None,
+    file_path: str | None = None,
+    file_extension: str | None = None,
     top: Annotated[int, "Number of results to return"] = 100,
     skip: Annotated[int, "Number of results to skip"] = 0,
 ):
@@ -53,11 +53,11 @@ def search_code_repositories(
 @tool
 def search_work_items_tool(
     search_text: str,
-    project_name: Optional[str] = None,
-    work_item_type: Optional[str] = None,
-    state: Optional[str] = None,
-    assigned_to: Optional[str] = None,
-    created_by: Optional[str] = None,
+    project_name: str | None = None,
+    work_item_type: str | None = None,
+    state: str | None = None,
+    assigned_to: str | None = None,
+    created_by: str | None = None,
     top: Annotated[int, "Number of results to return"] = 100,
     skip: Annotated[int, "Number of results to skip"] = 0,
 ):
@@ -92,9 +92,9 @@ def search_work_items_tool(
 @tool
 def search_wiki_pages(
     search_text: str,
-    project_name: Optional[str] = None,
-    wiki_name: Optional[str] = None,
-    path: Optional[str] = None,
+    project_name: str | None = None,
+    wiki_name: str | None = None,
+    path: str | None = None,
     top: Annotated[int, "Number of results to return"] = 100,
     skip: Annotated[int, "Number of results to skip"] = 0,
 ):

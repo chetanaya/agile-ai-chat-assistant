@@ -5,7 +5,6 @@ This module provides tools for interacting with Azure DevOps work item tracking 
 """
 
 import json
-from typing import Any, Dict, List, Optional
 
 from langchain_core.tools import tool
 
@@ -241,7 +240,7 @@ def create_state(
     name: str,
     color: str,
     state_category: str,
-    order: Optional[int] = None,
+    order: int | None = None,
     hidden: bool = False,
 ) -> str:
     """
@@ -300,11 +299,11 @@ def update_state(
     process_id: str,
     wit_ref_name: str,
     state_id: str,
-    name: Optional[str] = None,
-    color: Optional[str] = None,
-    state_category: Optional[str] = None,
-    order: Optional[int] = None,
-    hidden: Optional[bool] = None,
+    name: str | None = None,
+    color: str | None = None,
+    state_category: str | None = None,
+    order: int | None = None,
+    hidden: bool | None = None,
 ) -> str:
     """
     Update a state for a work item type in a process.

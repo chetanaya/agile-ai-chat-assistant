@@ -3,7 +3,6 @@ Azure DevOps API Integration Utilities
 """
 
 import os
-from typing import Any, Dict, List, Optional, Union
 
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
