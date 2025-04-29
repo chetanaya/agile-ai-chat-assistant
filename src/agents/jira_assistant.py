@@ -27,7 +27,7 @@ from agents.jira.projects import project_tools
 from agents.jira.sprints import sprint_tools
 from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
-from core import get_model, settings
+from core import get_model
 from schema.models import OpenAIModelName
 
 

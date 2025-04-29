@@ -3,7 +3,6 @@ from typing import TypeAlias
 
 from langchain_openai import ChatOpenAI
 
-from core.settings import settings
 from schema.models import OpenAIModelName
 
 _MODEL_TABLE = {

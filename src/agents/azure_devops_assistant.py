@@ -23,7 +23,7 @@ from agents.azure_devops.work import work_tools
 from agents.azure_devops.work_item_tracking import work_item_tools
 from agents.azure_devops.work_item_tracking_process import work_item_tracking_process_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
-from core import get_model, settings
+from core import get_model
 from schema.models import OpenAIModelName
 
 
