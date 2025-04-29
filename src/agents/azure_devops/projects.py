@@ -5,7 +5,6 @@ This module provides tools for interacting with Azure DevOps projects through th
 """
 
 import json
-from typing import Optional
 
 from azure.devops.v7_1.core.models import TeamProject
 from langchain_core.tools import tool
@@ -97,7 +96,7 @@ def create_project(
     description: str = "",
     visibility: str = "private",
     source_control_type: str = "Git",
-    process_template_id: Optional[str] = None,
+    process_template_id: str | None = None,
 ) -> str:
     """
     Create a new project in Azure DevOps.

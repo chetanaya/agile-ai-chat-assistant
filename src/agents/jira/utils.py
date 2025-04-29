@@ -5,9 +5,10 @@ JIRA API Integration Utilities
 import base64
 import json
 import os
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 import requests
+
 from core import settings
 
 
@@ -55,7 +56,7 @@ class JiraApiClient:
             "Accept": "application/json",
         }
 
-    def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
+    def _handle_response(self, response: requests.Response) -> dict[str, Any]:
         """
         Handle API response and convert to JSON, handling errors appropriately.
 
@@ -91,7 +92,7 @@ class JiraApiClient:
                 return {"success": True, "status_code": response.status_code, "text": response.text}
             raise ValueError(f"Invalid JSON response from JIRA API: {response.text}")
 
-    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Make a GET request to the JIRA API.
 
@@ -106,7 +107,7 @@ class JiraApiClient:
         response = requests.get(url, headers=self.headers, params=params)
         return self._handle_response(response)
 
-    def post(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def post(self, endpoint: str, data: dict[str, Any]) -> dict[str, Any]:
         """
         Make a POST request to the JIRA API.
 
@@ -121,7 +122,7 @@ class JiraApiClient:
         response = requests.post(url, headers=self.headers, json=data)
         return self._handle_response(response)
 
-    def put(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def put(self, endpoint: str, data: dict[str, Any]) -> dict[str, Any]:
         """
         Make a PUT request to the JIRA API.
 
@@ -136,7 +137,7 @@ class JiraApiClient:
         response = requests.put(url, headers=self.headers, json=data)
         return self._handle_response(response)
 
-    def delete(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def delete(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Make a DELETE request to the JIRA API.
 

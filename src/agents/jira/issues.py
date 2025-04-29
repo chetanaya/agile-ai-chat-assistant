@@ -4,9 +4,9 @@ JIRA Issues API Functions
 This module provides tools for interacting with JIRA issues through the REST API.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
@@ -82,12 +82,12 @@ def create_issue(project_key: str, summary: str, description: str, issue_type: s
 @tool
 def update_issue(
     issue_key: str,
-    summary: Optional[str] = None,
-    description: Optional[str] = None,
-    fields: Optional[Dict[str, Any]] = None,
-    update: Optional[Dict[str, List[Dict[str, Any]]]] = None,
-    properties: Optional[List[Dict[str, Any]]] = None,
-    history_metadata: Optional[Dict[str, Any]] = None,
+    summary: str | None = None,
+    description: str | None = None,
+    fields: dict[str, Any] | None = None,
+    update: dict[str, list[dict[str, Any]]] | None = None,
+    properties: list[dict[str, Any]] | None = None,
+    history_metadata: dict[str, Any] | None = None,
 ) -> str:
     """
     Updates an existing JIRA issue with advanced options.
@@ -111,7 +111,7 @@ def update_issue(
     """
     client = get_jira_client()
     try:
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
 
         # Handle fields parameter
         if fields is None:
@@ -151,7 +151,7 @@ def update_issue(
         if not data:
             return "No updates specified"
 
-        response = client.put(f"issue/{issue_key}", data)
+        client.put(f"issue/{issue_key}", data)
         return f"Issue {issue_key} updated successfully"
     except Exception as e:
         return f"Error updating issue {issue_key}: {str(e)}"
@@ -173,7 +173,7 @@ def delete_issue(issue_key: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.delete(f"issue/{issue_key}")
+        client.delete(f"issue/{issue_key}")
         return f"Issue {issue_key} deleted successfully"
     except Exception as e:
         return f"Error deleting issue {issue_key}: {str(e)}"
@@ -197,7 +197,7 @@ def assign_issue(issue_key: str, account_id: str) -> str:
     try:
         data = {"accountId": account_id}
 
-        response = client.put(f"issue/{issue_key}/assignee", data)
+        client.put(f"issue/{issue_key}/assignee", data)
         return f"Issue {issue_key} assigned successfully to account ID: {account_id}"
     except Exception as e:
         return f"Error assigning issue {issue_key}: {str(e)}"
@@ -235,7 +235,7 @@ def get_issue_transitions(issue_key: str) -> str:
 
 
 @tool
-def transition_issue(issue_key: str, transition_id: str, comment: Optional[str] = None) -> str:
+def transition_issue(issue_key: str, transition_id: str, comment: str | None = None) -> str:
     """
     Transitions a JIRA issue to a new status.
 
@@ -251,7 +251,7 @@ def transition_issue(issue_key: str, transition_id: str, comment: Optional[str] 
     """
     client = get_jira_client()
     try:
-        data: Dict[str, Any] = {"transition": {"id": transition_id}}
+        data: dict[str, Any] = {"transition": {"id": transition_id}}
 
         if comment:
             data["update"] = {
@@ -273,14 +273,14 @@ def transition_issue(issue_key: str, transition_id: str, comment: Optional[str] 
                 ]
             }
 
-        response = client.post(f"issue/{issue_key}/transitions", data)
+        client.post(f"issue/{issue_key}/transitions", data)
         return f"Issue {issue_key} transitioned successfully"
     except Exception as e:
         return f"Error transitioning issue {issue_key}: {str(e)}"
 
 
 @tool
-def archive_issues_by_keys(issue_keys: List[str]) -> str:
+def archive_issues_by_keys(issue_keys: list[str]) -> str:
     """
     Archives issues by their keys or IDs.
 
@@ -340,7 +340,7 @@ def archive_issues_by_jql(jql: str) -> str:
 
 
 @tool
-def unarchive_issues(issue_keys: List[str]) -> str:
+def unarchive_issues(issue_keys: list[str]) -> str:
     """
     Unarchives issues by their keys or IDs.
 
@@ -394,7 +394,7 @@ def export_archived_issues() -> str:
 
 
 @tool
-def bulk_create_issues(issues_data: List[Dict[str, Any]]) -> str:
+def bulk_create_issues(issues_data: list[dict[str, Any]]) -> str:
     """
     Creates multiple issues in bulk.
 
@@ -458,7 +458,7 @@ def bulk_create_issues(issues_data: List[Dict[str, Any]]) -> str:
 
 
 @tool
-def bulk_fetch_issues(issue_keys: List[str]) -> str:
+def bulk_fetch_issues(issue_keys: list[str]) -> str:
     """
     Fetches multiple issues in a single request.
 
@@ -505,9 +505,9 @@ def bulk_fetch_issues(issue_keys: List[str]) -> str:
 
 @tool
 def get_create_issue_metadata(
-    project_keys: Optional[List[str]] = None,
-    issue_type_names: Optional[List[str]] = None,
-    expand: Optional[str] = None,
+    project_keys: list[str] | None = None,
+    issue_type_names: list[str] | None = None,
+    expand: str | None = None,
 ) -> str:
     """
     Retrieves metadata for creating issues.
@@ -722,7 +722,7 @@ def get_issue_changelog(issue_key: str) -> str:
 
 
 @tool
-def get_changelogs_by_ids(issue_key: str, changelog_ids: List[str]) -> str:
+def get_changelogs_by_ids(issue_key: str, changelog_ids: list[str]) -> str:
     """
     Gets changelogs for an issue by their IDs.
 
@@ -766,7 +766,7 @@ def get_changelogs_by_ids(issue_key: str, changelog_ids: List[str]) -> str:
 
 
 @tool
-def bulk_fetch_changelogs(issue_keys: List[str]) -> str:
+def bulk_fetch_changelogs(issue_keys: list[str]) -> str:
     """
     Fetches changelogs for multiple issues in a single request.
 
@@ -818,13 +818,13 @@ def send_issue_notification(
     issue_key: str,
     subject: str,
     text_body: str,
-    html_body: Optional[str] = None,
+    html_body: str | None = None,
     to_reporter: bool = False,
     to_assignee: bool = False,
     to_watchers: bool = False,
     to_voters: bool = False,
-    to_users: Optional[List[str]] = None,
-    to_groups: Optional[List[str]] = None,
+    to_users: list[str] | None = None,
+    to_groups: list[str] | None = None,
 ) -> str:
     """
     Sends a notification about an issue to specified recipients.
@@ -877,7 +877,7 @@ def send_issue_notification(
 
         data["notification"] = notification
 
-        response = client.post(f"issue/{issue_key}/notify", data)
+        client.post(f"issue/{issue_key}/notify", data)
         return f"Notification sent successfully for issue {issue_key}"
     except Exception as e:
         return f"Error sending notification for issue {issue_key}: {str(e)}"

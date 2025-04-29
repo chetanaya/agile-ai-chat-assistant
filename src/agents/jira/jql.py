@@ -5,7 +5,7 @@ This module provides tools for working with JQL through the REST API.
 It includes endpoints for autocomplete data, suggestions, parsing, and other JQL-specific operations.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from langchain_core.tools import tool
 
@@ -78,9 +78,9 @@ def get_field_reference_data() -> str:
 
 @tool
 def post_field_reference_data(
-    field_names: Optional[List[str]] = None,
-    function_names: Optional[List[str]] = None,
-    field_ids: Optional[List[str]] = None,
+    field_names: list[str] | None = None,
+    function_names: list[str] | None = None,
+    field_ids: list[str] | None = None,
 ) -> str:
     """
     Returns reference data for JQL searches using POST method.
@@ -155,7 +155,7 @@ def post_field_reference_data(
 def get_field_autocomplete_suggestions(
     field_name: str,
     field_value: str,
-    predicates: Optional[List[str]] = None,
+    predicates: list[str] | None = None,
 ) -> str:
     """
     Returns auto-complete suggestions for JQL field values.
@@ -201,8 +201,8 @@ def get_field_autocomplete_suggestions(
 
 @tool
 def sanitize_jql_queries(
-    queries: List[str],
-    account_id: Optional[str] = None,
+    queries: list[str],
+    account_id: str | None = None,
 ) -> str:
     """
     Converts readable details in one or more JQL queries to IDs.
@@ -250,7 +250,7 @@ def sanitize_jql_queries(
 
 
 @tool
-def convert_user_ids_in_jql(queries: List[str]) -> str:
+def convert_user_ids_in_jql(queries: list[str]) -> str:
     """
     Converts user identifiers to account IDs in JQL queries.
 
@@ -315,7 +315,7 @@ def parse_jql_query(query: str, validation_level: str = "strict") -> str:
         queries = response.get("queries", [])
 
         if not queries:
-            return f"Error parsing JQL query: No parse results returned"
+            return "Error parsing JQL query: No parse results returned"
 
         parsed = queries[0]
 
@@ -345,7 +345,7 @@ def parse_jql_query(query: str, validation_level: str = "strict") -> str:
         return f"Error parsing JQL query: {str(e)}"
 
 
-def format_jql_structure(structure: Dict[str, Any], indent: int = 0) -> str:
+def format_jql_structure(structure: dict[str, Any], indent: int = 0) -> str:
     """Helper function to format JQL structure in a readable way"""
     result = ""
     prefix = " " * indent

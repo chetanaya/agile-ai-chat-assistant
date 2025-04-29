@@ -15,14 +15,17 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
-from agents.jira.issues import issue_tools
+from agents.jira.backlog import backlog_tools
+from agents.jira.boards import board_tools
 from agents.jira.issue_comments import comment_tools
 from agents.jira.issue_search import search_tools
 from agents.jira.issue_worklogs import worklog_tools
-from agents.jira.projects import project_tools
-from agents.jira.users import user_tools
+from agents.jira.issues import issue_tools
 from agents.jira.jql import jql_tools
 from agents.jira.permissions import permission_tools
+from agents.jira.projects import project_tools
+from agents.jira.sprints import sprint_tools
+from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -48,6 +51,9 @@ tools.extend(user_tools)
 tools.extend(worklog_tools)
 tools.extend(jql_tools)
 tools.extend(permission_tools)
+tools.extend(sprint_tools)
+tools.extend(board_tools)
+tools.extend(backlog_tools)
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
@@ -72,12 +78,12 @@ instructions = f"""
     Permission handling:
     - Always check permissions before performing actions that might require specific permissions
     - Use get_my_permissions to check if the user has permission for specific actions
-    - For project-related actions, check project permissions first 
+    - For project-related actions, check project permissions first
     - For issue operations, verify the user has the appropriate issue permissions
     - Use check_bulk_permissions for checking multiple permissions at once
     - If permissions are missing, inform the user clearly and suggest alternatives
     - Use get_permitted_projects to find projects where the user can perform specific actions
-    
+
     Issue management:
     - For creating issues, use create_issue and verify required fields first with get_create_issue_metadata
     - For updating issues, use update_issue and check editable fields with get_edit_issue_metadata
@@ -86,6 +92,17 @@ instructions = f"""
     - For issue history, use get_issue_changelog to track all changes made to an issue
     - Handle archived issues with archive_issues_by_keys, archive_issues_by_jql, and unarchive_issues
 
+    Sprint management:
+    - To create sprints, use create_sprint with the appropriate board ID
+    - Get sprint details with get_sprint before making any sprint changes
+    - For updating sprints, use update_sprint to modify name, goal, dates, or state
+    - When adding issues to sprints, use move_issues_to_sprint
+    - View sprint issues with get_sprint_issues, with optional JQL filtering
+    - For adjusting sprint order, use swap_sprint to change the position in the backlog
+    - Store custom data with sprint properties using set_sprint_property
+    - Sprint states can be "future", "active", or "closed"
+    - Always provide ISO format dates when working with sprint date fields
+
     Search and JQL:
     - Use JQL (JIRA Query Language) for efficient searching with proper syntax
     - Leverage get_field_reference_data for available fields and operators
@@ -93,6 +110,7 @@ instructions = f"""
     - Parse and validate JQL queries with parse_jql_query before executing searches
     - Sanitize queries with sanitize_jql_queries when necessary for better performance
     - For searching users, prefer accountId over username for better compatibility
+    - Use Sprint-specific JQL functions like sprint() when appropriate
 
     Comments and worklog:
     - Create comments with proper Atlassian Document Format
@@ -115,13 +133,17 @@ instructions = f"""
     - Search flow: get_field_reference_data → search_issues_by_jql
     - Archive flow: search_issues_by_jql → archive_issues_by_keys
     - Permission check: get_my_permissions → [operation function]
-    
+    - Sprint creation flow: create_sprint → move_issues_to_sprint
+    - Sprint update flow: get_sprint → update_sprint
+    - Sprint issue flow: get_sprint_issues → move_issues_to_sprint
+
     Function parameter handling:
-    - Always pass required parameters (e.g., issue_key, project_key)
+    - Always pass required parameters (e.g., issue_key, project_key, sprint_id)
     - For issue updates, specify only the fields that need to change
     - For JQL queries, build them step by step using proper syntax
     - Use optional parameters only when necessary for the specific use case
     - For list parameters (e.g., issue_keys), format correctly as arrays/lists
+    - For sprint operations, provide the sprint_id as an integer, not a string
 
     For complex requests:
     - Break down multiple tasks and address them systematically
@@ -142,7 +164,8 @@ instructions = f"""
     - Use get_field_reference_data to understand available fields and operators
     - When handling errors, explain what went wrong and suggest specific corrections
     - If a function call fails, don't retry with identical parameters
-    
+    - For Sprint API calls, remember they use a different API base path (rest/agile/1.0/)
+
     Response formatting:
     - Present JIRA data in an organized, readable format
     - For lists of issues, use clear formatting with key details

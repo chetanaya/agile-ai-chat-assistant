@@ -4,9 +4,7 @@ JIRA Users API Functions
 This module provides tools for interacting with JIRA users through the REST API.
 """
 
-from typing import Any, Dict, List, Optional
-
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
@@ -29,7 +27,7 @@ def get_current_user() -> str:
         email = response.get("emailAddress", "Unknown")
         account_id = response.get("accountId", "Unknown")
 
-        result = f"Current User Information:\n"
+        result = "Current User Information:\n"
         result += f"Name: {display_name}\n"
         result += f"Email: {email}\n"
         result += f"Account ID: {account_id}\n"
@@ -395,7 +393,7 @@ def set_user_default_columns(account_id: str, columns: str) -> str:
         params = {"accountId": account_id}
         data = column_list
 
-        response = client.put("user/columns", data=data, params=params)
+        client.put("user/columns", data=data, params=params)
 
         return f"Default columns for user with account ID {account_id} set successfully"
     except Exception as e:
@@ -418,7 +416,7 @@ def reset_user_default_columns(account_id: str) -> str:
     client = get_jira_client()
     try:
         params = {"accountId": account_id}
-        response = client.delete("user/columns", params=params)
+        client.delete("user/columns", params=params)
 
         return f"Default columns for user with account ID {account_id} reset successfully"
     except Exception as e:

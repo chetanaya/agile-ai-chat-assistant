@@ -4,15 +4,13 @@ JIRA Issue Comments API Functions
 This module provides tools for interacting with JIRA issue comments through the REST API.
 """
 
-from typing import Any, Dict, List, Optional
-
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
 
 @tool
-def get_comment(issue_key: str, comment_id: str, expand: Optional[str] = None) -> str:
+def get_comment(issue_key: str, comment_id: str, expand: str | None = None) -> str:
     """
     Retrieves a specific comment from an issue.
 
@@ -111,7 +109,7 @@ def get_comments(
 
 
 @tool
-def add_comment(issue_key: str, comment: str, visibility: Optional[Dict[str, str]] = None) -> str:
+def add_comment(issue_key: str, comment: str, visibility: dict[str, str] | None = None) -> str:
     """
     Adds a comment to a JIRA issue.
 
@@ -148,7 +146,7 @@ def add_comment(issue_key: str, comment: str, visibility: Optional[Dict[str, str
 
 @tool
 def update_comment(
-    issue_key: str, comment_id: str, comment: str, visibility: Optional[Dict[str, str]] = None
+    issue_key: str, comment_id: str, comment: str, visibility: dict[str, str] | None = None
 ) -> str:
     """
     Updates an existing comment on an issue.
@@ -178,7 +176,7 @@ def update_comment(
         if visibility:
             data["visibility"] = visibility
 
-        response = client.put(f"issue/{issue_key}/comment/{comment_id}", data)
+        client.put(f"issue/{issue_key}/comment/{comment_id}", data)
         return f"Comment {comment_id} on issue {issue_key} updated successfully"
     except Exception as e:
         return f"Error updating comment {comment_id} on issue {issue_key}: {str(e)}"
@@ -200,14 +198,14 @@ def delete_comment(issue_key: str, comment_id: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.delete(f"issue/{issue_key}/comment/{comment_id}")
+        client.delete(f"issue/{issue_key}/comment/{comment_id}")
         return f"Comment {comment_id} deleted from issue {issue_key} successfully"
     except Exception as e:
         return f"Error deleting comment {comment_id} from issue {issue_key}: {str(e)}"
 
 
 @tool
-def get_comments_by_ids(comment_ids: List[int], expand: Optional[str] = None) -> str:
+def get_comments_by_ids(comment_ids: list[int], expand: str | None = None) -> str:
     """
     Retrieves comments from issues by their IDs.
 

@@ -4,7 +4,7 @@ Azure DevOps Search API Integration
 This module provides functionality to interact with the Azure DevOps Search API.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from azure.devops.v7_1.search.models import (
     CodeSearchRequest,
@@ -28,14 +28,14 @@ def get_search_client():
 
 def search_code(
     search_text: str,
-    project_name: Optional[str] = None,
-    repository_name: Optional[str] = None,
-    file_path: Optional[str] = None,
-    file_extension: Optional[str] = None,
+    project_name: str | None = None,
+    repository_name: str | None = None,
+    file_path: str | None = None,
+    file_extension: str | None = None,
     top: int = 100,
     skip: int = 0,
     include_matching_content: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Search code repositories.
 
@@ -112,14 +112,14 @@ def search_code(
 
 def search_work_items(
     search_text: str,
-    project_name: Optional[str] = None,
-    work_item_type: Optional[str] = None,
-    state: Optional[str] = None,
-    assigned_to: Optional[str] = None,
-    created_by: Optional[str] = None,
+    project_name: str | None = None,
+    work_item_type: str | None = None,
+    state: str | None = None,
+    assigned_to: str | None = None,
+    created_by: str | None = None,
     top: int = 100,
     skip: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Search work items.
 
@@ -188,13 +188,13 @@ def search_work_items(
 
 def search_wiki(
     search_text: str,
-    project_name: Optional[str] = None,
-    wiki_name: Optional[str] = None,
-    path: Optional[str] = None,
+    project_name: str | None = None,
+    wiki_name: str | None = None,
+    path: str | None = None,
     top: int = 100,
     skip: int = 0,
     include_content: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Search wiki pages.
 

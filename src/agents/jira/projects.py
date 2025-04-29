@@ -4,9 +4,7 @@ JIRA Projects API Functions
 This module provides tools for interacting with JIRA projects through the REST API.
 """
 
-from typing import Any, Dict, List, Optional
-
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
 
@@ -209,7 +207,7 @@ def create_project(
     key: str,
     project_type_key: str = "business",
     description: str = "",
-    lead_account_id: Optional[str] = None,
+    lead_account_id: str | None = None,
 ) -> str:
     """
     Create a new JIRA project.
@@ -254,9 +252,9 @@ def create_project(
 @tool
 def update_project(
     project_key: str,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    lead_account_id: Optional[str] = None,
+    name: str | None = None,
+    description: str | None = None,
+    lead_account_id: str | None = None,
 ) -> str:
     """
     Update an existing JIRA project.
@@ -288,7 +286,7 @@ def update_project(
         if not data:
             return "No updates specified for the project"
 
-        response = client.put(f"project/{project_key}", data)
+        client.put(f"project/{project_key}", data)
 
         return f"Project {project_key} updated successfully"
     except Exception as e:
@@ -311,7 +309,7 @@ def delete_project(project_key: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.delete(f"project/{project_key}")
+        client.delete(f"project/{project_key}")
 
         return f"Project {project_key} deleted successfully"
     except Exception as e:
@@ -333,7 +331,7 @@ def archive_project(project_key: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.post(f"project/{project_key}/archive", {})
+        client.post(f"project/{project_key}/archive", {})
 
         return f"Project {project_key} archived successfully"
     except Exception as e:
@@ -355,7 +353,7 @@ def restore_project(project_key: str) -> str:
     """
     client = get_jira_client()
     try:
-        response = client.post(f"project/{project_key}/restore", {})
+        client.post(f"project/{project_key}/restore", {})
 
         return f"Project {project_key} restored successfully"
     except Exception as e:
@@ -384,7 +382,7 @@ def get_project_issue_type_hierarchy(project_key: str) -> str:
         if not response:
             return f"No issue type hierarchy found for project {project_key}"
 
-        project_details = response.get("projectId", "Unknown project ID")
+        # project_details = response.get("projectId", "Unknown project ID")
         root_level = response.get("hierarchy", [])
 
         for level in root_level:
@@ -441,7 +439,7 @@ def get_project_notification_scheme(project_key: str) -> str:
 
 @tool
 def search_projects(
-    query: Optional[str] = None, project_type_key: Optional[str] = None, max_results: int = 10
+    query: str | None = None, project_type_key: str | None = None, max_results: int = 10
 ) -> str:
     """
     Search for JIRA projects with pagination.
