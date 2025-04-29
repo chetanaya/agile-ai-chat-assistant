@@ -112,7 +112,11 @@ def get_team_current_iteration(project_name: str, team_name: str) -> str:
 
 
 @tool
-def add_team_iteration(project_name: str, team_name: str, iteration_id: str) -> str:
+def add_team_iteration(
+    project_name: str,
+    team_name: str,
+    iteration_id: str,
+) -> str:
     """
     Add an iteration to a team.
 
@@ -128,9 +132,14 @@ def add_team_iteration(project_name: str, team_name: str, iteration_id: str) -> 
         client = get_azure_devops_client()
         work_client = client.get_client("work")
 
+        # Import TeamSettingsIteration and TeamContext
+        from azure.devops.v7_1.work.models import TeamContext, TeamSettingsIteration
+
         # Add iteration
+        team_context = TeamContext(project=project_name, team=team_name)
+        iteration_context = TeamSettingsIteration(id=iteration_id)
         team_iteration = work_client.post_team_iteration(
-            {"id": iteration_id}, team_context={"project": project_name, "team": team_name}
+            iteration=iteration_context, team_context=team_context
         )
 
         # Format for display

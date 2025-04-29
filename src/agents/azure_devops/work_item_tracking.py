@@ -1279,14 +1279,14 @@ def create_work_item_from_template(
 
 @tool
 def get_classification_node(
-    project_name: str, structure_type: str, path: Optional[str] = None, depth: Optional[int] = None
+    project_name: str, structure_group: str, path: Optional[str] = None, depth: Optional[int] = None
 ) -> str:
     """
     Get a classification node for a given project and path.
 
     Args:
         project_name (str): The name of the project
-        structure_type (str): The classification structure type (area or iteration)
+        structure_group (str): The classification structure group (areas or iterations)
         path (Optional[str]): The path of the classification node, can be optional
         depth (Optional[int]): Depth of children to fetch
 
@@ -1299,7 +1299,7 @@ def get_classification_node(
 
         # Get the classification node
         node = wit_client.get_classification_node(
-            project=project_name, structure_type=structure_type, path=path, depth=depth
+            project=project_name, structure_group=structure_group, path=path, depth=depth
         )
 
         # Format the node for display
@@ -1312,16 +1312,19 @@ def get_classification_node(
 
 @tool
 def get_classification_nodes(
-    project_name: str, structure_type: str, ids: Optional[list] = None, depth: Optional[int] = None
+    project_name: str,
+    ids: Optional[list] = None,
+    depth: Optional[int] = None,
+    error_policy: Optional[str] = None,
 ) -> str:
     """
     Get multiple classification nodes for a given project.
 
     Args:
         project_name (str): The name of the project
-        structure_type (str): The classification structure type (area or iteration)
         ids (Optional[list]): List of node IDs to fetch, if not provided gets root nodes
         depth (Optional[int]): Depth of children to fetch
+        error_policy (Optional[str]): Error policy for fetching nodes. Possible options are fail or omit
 
     Returns:
         str: JSON string containing the classification nodes
@@ -1332,7 +1335,7 @@ def get_classification_nodes(
 
         # Get the classification nodes
         nodes = wit_client.get_classification_nodes(
-            project=project_name, structure_type=structure_type, ids=ids, depth=depth
+            project=project_name, ids=ids, depth=depth, error_policy=error_policy
         )
 
         # Format the nodes for display
