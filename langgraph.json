@@ -2,7 +2,7 @@
     "python_version": "3.12",
     "dependencies": ["."],
     "graphs": {
-        "research_assistant": "./src/agents/research_assistant.py:research_assistant"
+        "jira_assistant": "./src/agents/jira_assistant.py:jira_assistant"
     },
     "env": "./.env"
 }
