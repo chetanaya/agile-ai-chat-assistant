@@ -5,6 +5,7 @@ This module provides tools for interacting with JIRA issues through the REST API
 """
 
 from typing import Any
+import json
 
 from langchain_core.tools import tool
 
@@ -34,7 +35,7 @@ def get_issue(issue_key: str) -> str:
                 "fields": "summary,description,status,assignee,priority,issuetype,created,updated"
             },
         )
-        return f"Issue details for {issue_key}:\n{response}"
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving issue {issue_key}: {str(e)}"
 
@@ -219,17 +220,7 @@ def get_issue_transitions(issue_key: str) -> str:
     client = get_jira_client()
     try:
         response = client.get(f"issue/{issue_key}/transitions")
-        transitions = response.get("transitions", [])
-
-        result = f"Available transitions for issue {issue_key}:\n\n"
-
-        for transition in transitions:
-            transition_id = transition.get("id", "Unknown")
-            name = transition.get("name", "Unknown")
-
-            result += f"- {name} (ID: {transition_id})\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error getting transitions for issue {issue_key}: {str(e)}"
 

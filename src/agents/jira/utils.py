@@ -17,7 +17,7 @@ class JiraApiClient:
     A client for interacting with the JIRA REST API.
     """
 
-    def __init__(self):
+    def __init__(self, api_base_path: str = "rest/api/3/"):
         """Initialize the JIRA API client with authentication details from environment variables."""
         self.jira_url = (
             settings.JIRA_URL.get_secret_value()
@@ -43,7 +43,8 @@ class JiraApiClient:
             self.jira_url += "/"
 
         # Base API path
-        self.api_base_path = "rest/api/3/"
+        # self.api_base_path = "rest/api/3/"
+        self.api_base_path = api_base_path
 
         # Encode authentication credentials
         auth_str = f"{self.jira_email}:{self.jira_api_token}"
@@ -153,11 +154,12 @@ class JiraApiClient:
         return self._handle_response(response)
 
 
-def get_jira_client() -> JiraApiClient:
+def get_jira_client(api_base_path: str = "rest/api/3/") -> JiraApiClient:
     """
     Get a JIRA API client instance.
 
     Returns:
         JiraApiClient: JIRA API client
     """
-    return JiraApiClient()
+    # return JiraApiClient()
+    return JiraApiClient(api_base_path=api_base_path)

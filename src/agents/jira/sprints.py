@@ -4,6 +4,7 @@ JIRA Sprints API Functions
 This module provides tools for interacting with JIRA Sprints through the REST API.
 """
 
+import json
 from typing import Any
 
 from langchain_core.tools import tool
@@ -54,7 +55,8 @@ def create_sprint(
         try:
             response = client.post("sprint", data)
 
-            return f"Sprint created successfully: {response.get('id', 'Unknown')} - {response.get('name', 'Unknown')}"
+            # return f"Sprint created successfully: {response.get('id', 'Unknown')} - {response.get('name', 'Unknown')}"
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
@@ -84,23 +86,7 @@ def get_sprint(sprint_id: int) -> str:
 
         try:
             response = client.get(f"sprint/{sprint_id}")
-
-            sprint_info = (
-                f"Sprint ID: {response.get('id')}\n"
-                f"Name: {response.get('name')}\n"
-                f"State: {response.get('state')}\n"
-            )
-
-            if response.get("startDate"):
-                sprint_info += f"Start Date: {response.get('startDate')}\n"
-            if response.get("endDate"):
-                sprint_info += f"End Date: {response.get('endDate')}\n"
-            if response.get("completeDate"):
-                sprint_info += f"Complete Date: {response.get('completeDate')}\n"
-            if response.get("goal"):
-                sprint_info += f"Goal: {response.get('goal')}\n"
-
-            return sprint_info
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
@@ -225,7 +211,7 @@ def get_sprint_issues(
         fields (List[str], optional): List of issue fields to include in the response
 
     Returns:
-        str: Formatted list of issues in the sprint
+        str: JSON string with sprint issues data
     """
     client = get_jira_client()
     try:
@@ -243,25 +229,7 @@ def get_sprint_issues(
 
         try:
             response = client.get(f"sprint/{sprint_id}/issue", params=params)
-
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
-
-            if not issues:
-                return f"No issues found in sprint {sprint_id}"
-
-            result = f"Found {len(issues)} of {total} total issues in sprint {sprint_id}:\n\n"
-
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
-
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
-
-            return result
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
@@ -332,7 +300,7 @@ def get_sprint_properties_keys(sprint_id: int) -> str:
         sprint_id (int): The sprint ID (e.g., 123)
 
     Returns:
-        str: List of property keys
+        str: JSON string with property keys
     """
     client = get_jira_client()
     try:
@@ -348,13 +316,14 @@ def get_sprint_properties_keys(sprint_id: int) -> str:
             if not keys:
                 return f"No properties found for sprint {sprint_id}"
 
-            result = f"Properties for sprint {sprint_id}:\n"
-            for key_info in keys:
-                key = key_info.get("key", "Unknown")
-                # self_url = key_info.get("self", "Unknown")
-                result += f"- {key}\n"
+            # result = f"Properties for sprint {sprint_id}:\n"
+            # for key_info in keys:
+            #     key = key_info.get("key", "Unknown")
+            #     # self_url = key_info.get("self", "Unknown")
+            #     result += f"- {key}\n"
 
-            return result
+            # return result
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
@@ -375,7 +344,7 @@ def get_sprint_property(sprint_id: int, property_key: str) -> str:
         property_key (str): The key of the property to get
 
     Returns:
-        str: Property value
+        str: JSON string with Property value
     """
     client = get_jira_client()
     try:
@@ -386,10 +355,11 @@ def get_sprint_property(sprint_id: int, property_key: str) -> str:
         try:
             response = client.get(f"sprint/{sprint_id}/properties/{property_key}")
 
-            key = response.get("key", "Unknown")
-            value = response.get("value", "No value")
+            # key = response.get("key", "Unknown")
+            # value = response.get("value", "No value")
 
-            return f"Property '{key}' for sprint {sprint_id}: {value}"
+            # return f"Property '{key}' for sprint {sprint_id}: {value}"
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path

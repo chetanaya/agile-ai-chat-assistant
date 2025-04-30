@@ -4,6 +4,7 @@ JIRA Boards API Functions
 This module provides tools for interacting with JIRA Boards through the REST API.
 """
 
+import json
 from typing import Any
 
 from langchain_core.tools import tool
@@ -32,7 +33,7 @@ def get_all_boards(
         project_key_or_id (str, optional): Filters results to boards that are relevant to a project.
 
     Returns:
-        str: Formatted list of boards with their IDs, names, and types
+        str: JSON string with board details
     """
     client = get_jira_client()
     try:
@@ -52,26 +53,7 @@ def get_all_boards(
 
         try:
             response = client.get("board", params=params)
-
-            boards = response.get("values", [])
-            total = response.get("total", 0)
-
-            if not boards:
-                return "No boards found matching the criteria"
-
-            result = f"Found {len(boards)} of {total} total boards:\n\n"
-
-            for board in boards:
-                board_id = board.get("id", "Unknown")
-                board_name = board.get("name", "Unknown")
-                board_type = board.get("type", "Unknown")
-
-                result += f"- Board ID: {board_id}, Name: {board_name}, Type: {board_type}\n"
-
-            if len(boards) < total:
-                result += f"\nShowing {len(boards)} of {total} boards. Use start_at parameter to see more."
-
-            return result
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
@@ -194,7 +176,7 @@ def get_board(board_id: int) -> str:
         board_id (int): The board ID (e.g., 123)
 
     Returns:
-        str: Formatted board details
+        str: JSON string with board details
     """
     client = get_jira_client()
     try:
@@ -204,17 +186,7 @@ def get_board(board_id: int) -> str:
 
         try:
             response = client.get(f"board/{board_id}")
-
-            board_id = response.get("id", "Unknown")
-            board_name = response.get("name", "Unknown")
-            board_type = response.get("type", "Unknown")
-            board_self = response.get("self", "Unknown")
-
-            result = (
-                f"Board ID: {board_id}\nName: {board_name}\nType: {board_type}\nURL: {board_self}\n"
-            )
-
-            return result
+            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
         finally:
             # Restore the original API base path
             client.api_base_path = original_api_base_path
