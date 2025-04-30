@@ -35,7 +35,7 @@ def get_all_boards(
     Returns:
         str: JSON string with board details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -47,16 +47,8 @@ def get_all_boards(
         if project_key_or_id:
             params["projectKeyOrId"] = project_key_or_id
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get("board", params=params)
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get("board", params=params)
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving boards: {str(e)}"
@@ -85,7 +77,7 @@ def create_board(
     Returns:
         str: JSON string with created board details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         # Prepare data for the API request
         data = {"name": name, "type": type_}
@@ -98,21 +90,13 @@ def create_board(
             if location_id:
                 data["location"]["projectId"] = location_id
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.post("board", data)
 
-        try:
-            response = client.post("board", data)
+        board_id = response.get("id", "Unknown")
+        board_name = response.get("name", "Unknown")
+        board_type = response.get("type", "Unknown")
 
-            board_id = response.get("id", "Unknown")
-            board_name = response.get("name", "Unknown")
-            board_type = response.get("type", "Unknown")
-
-            return f"Board created successfully: ID {board_id} - {board_name} ({board_type})"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return f"Board created successfully: ID {board_id} - {board_name} ({board_type})"
 
     except Exception as e:
         return f"Error creating board: {str(e)}"
@@ -132,34 +116,26 @@ def get_board_by_filter_id(filter_id: int) -> str:
     Returns:
         str: Formatted list of boards that use the specified filter
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/filter/{filter_id}")
 
-        try:
-            response = client.get(f"board/filter/{filter_id}")
+        boards = response.get("values", [])
+        total = response.get("total", 0)
 
-            boards = response.get("values", [])
-            total = response.get("total", 0)
+        if not boards:
+            return f"No boards found using filter ID {filter_id}"
 
-            if not boards:
-                return f"No boards found using filter ID {filter_id}"
+        result = f"Found {len(boards)} of {total} total boards using filter ID {filter_id}:\n\n"
 
-            result = f"Found {len(boards)} of {total} total boards using filter ID {filter_id}:\n\n"
+        for board in boards:
+            board_id = board.get("id", "Unknown")
+            board_name = board.get("name", "Unknown")
+            board_type = board.get("type", "Unknown")
 
-            for board in boards:
-                board_id = board.get("id", "Unknown")
-                board_name = board.get("name", "Unknown")
-                board_type = board.get("type", "Unknown")
+            result += f"- Board ID: {board_id}, Name: {board_name}, Type: {board_type}\n"
 
-                result += f"- Board ID: {board_id}, Name: {board_name}, Type: {board_type}\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving boards for filter ID {filter_id}: {str(e)}"
@@ -178,18 +154,10 @@ def get_board(board_id: int) -> str:
     Returns:
         str: JSON string with board details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get(f"board/{board_id}")
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get(f"board/{board_id}")
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving board {board_id}: {str(e)}"
@@ -209,18 +177,10 @@ def delete_board(board_id: int) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.delete(f"board/{board_id}")
-            return f"Board {board_id} deleted successfully"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.delete(f"board/{board_id}")
+        return f"Board {board_id} deleted successfully"
 
     except Exception as e:
         return f"Error deleting board {board_id}: {str(e)}"
@@ -251,7 +211,7 @@ def get_backlog_issues(
     Returns:
         str: Formatted list of issues in the backlog
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -262,37 +222,33 @@ def get_backlog_issues(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/backlog", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/backlog", params=params)
+        issues = response.get("issues", [])
+        total = response.get("total", 0)
 
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
+        if not issues:
+            return f"No issues found in the backlog of board {board_id}"
 
-            if not issues:
-                return f"No issues found in the backlog of board {board_id}"
+        result = (
+            f"Found {len(issues)} of {total} total issues in the backlog of board {board_id}:\n\n"
+        )
 
-            result = f"Found {len(issues)} of {total} total issues in the backlog of board {board_id}:\n\n"
+        for issue in issues:
+            key = issue.get("key", "Unknown")
+            fields = issue.get("fields", {})
+            summary = fields.get("summary", "No summary")
+            status = fields.get("status", {}).get("name", "Unknown status")
+            issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
 
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
+            result += f"- {key} [{issue_type}]: {summary} ({status})\n"
 
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
+        if len(issues) < total:
+            result += (
+                f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
+            )
 
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving backlog issues for board {board_id}: {str(e)}"
@@ -311,50 +267,40 @@ def get_board_configuration(board_id: int) -> str:
     Returns:
         str: Formatted board configuration details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/configuration")
 
-        try:
-            response = client.get(f"board/{board_id}/configuration")
+        id = response.get("id", "Unknown")
+        name = response.get("name", "Unknown")
 
-            id = response.get("id", "Unknown")
-            name = response.get("name", "Unknown")
+        result = f"Board Configuration for ID {id} - {name}:\n\n"
 
-            result = f"Board Configuration for ID {id} - {name}:\n\n"
+        # Add column configuration if available
+        if "columnConfig" in response:
+            columns = response.get("columnConfig", {}).get("columns", [])
+            result += "Column Configuration:\n"
+            for column in columns:
+                column_name = column.get("name", "Unknown")
+                statuses = [status.get("name", "Unknown") for status in column.get("statuses", [])]
+                result += f"- Column: {column_name}, Statuses: {', '.join(statuses)}\n"
+            result += "\n"
 
-            # Add column configuration if available
-            if "columnConfig" in response:
-                columns = response.get("columnConfig", {}).get("columns", [])
-                result += "Column Configuration:\n"
-                for column in columns:
-                    column_name = column.get("name", "Unknown")
-                    statuses = [
-                        status.get("name", "Unknown") for status in column.get("statuses", [])
-                    ]
-                    result += f"- Column: {column_name}, Statuses: {', '.join(statuses)}\n"
-                result += "\n"
+        # Add estimation configuration if available
+        if "estimation" in response:
+            estimation = response.get("estimation", {})
+            estimation_type = estimation.get("type", "Unknown")
+            field = estimation.get("field", {}).get("name", "Unknown")
+            result += f"Estimation: Type={estimation_type}, Field={field}\n\n"
 
-            # Add estimation configuration if available
-            if "estimation" in response:
-                estimation = response.get("estimation", {})
-                estimation_type = estimation.get("type", "Unknown")
-                field = estimation.get("field", {}).get("name", "Unknown")
-                result += f"Estimation: Type={estimation_type}, Field={field}\n\n"
+        # Add filter configuration if available
+        if "filter" in response:
+            filter_config = response.get("filter", {})
+            filter_id = filter_config.get("id", "Unknown")
+            filter_name = filter_config.get("name", "Unknown")
+            result += f"Filter: ID={filter_id}, Name={filter_name}\n\n"
 
-            # Add filter configuration if available
-            if "filter" in response:
-                filter_config = response.get("filter", {})
-                filter_id = filter_config.get("id", "Unknown")
-                filter_name = filter_config.get("name", "Unknown")
-                result += f"Filter: ID={filter_id}, Name={filter_name}\n\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving configuration for board {board_id}: {str(e)}"
@@ -381,46 +327,38 @@ def get_board_epics(
     Returns:
         str: Formatted list of epics on the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
         if done is not None:
             params["done"] = str(done).lower()
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/epic", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/epic", params=params)
+        epics = response.get("values", [])
+        total = response.get("total", 0)
 
-            epics = response.get("values", [])
-            total = response.get("total", 0)
+        if not epics:
+            return f"No epics found for board {board_id}"
 
-            if not epics:
-                return f"No epics found for board {board_id}"
+        result = f"Found {len(epics)} of {total} total epics for board {board_id}:\n\n"
 
-            result = f"Found {len(epics)} of {total} total epics for board {board_id}:\n\n"
+        for epic in epics:
+            epic_id = epic.get("id", "Unknown")
+            epic_key = epic.get("key", "Unknown")
+            epic_name = epic.get("name", "Unknown")
+            epic_done = epic.get("done", False)
+            status = "Done" if epic_done else "Not Done"
 
-            for epic in epics:
-                epic_id = epic.get("id", "Unknown")
-                epic_key = epic.get("key", "Unknown")
-                epic_name = epic.get("name", "Unknown")
-                epic_done = epic.get("done", False)
-                status = "Done" if epic_done else "Not Done"
+            result += f"- Epic {epic_key} (ID: {epic_id}): {epic_name} ({status})\n"
 
-                result += f"- Epic {epic_key} (ID: {epic_id}): {epic_name} ({status})\n"
+        if len(epics) < total:
+            result += (
+                f"\nShowing {len(epics)} of {total} epics. Use start_at parameter to see more."
+            )
 
-            if len(epics) < total:
-                result += (
-                    f"\nShowing {len(epics)} of {total} epics. Use start_at parameter to see more."
-                )
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving epics for board {board_id}: {str(e)}"
@@ -451,7 +389,7 @@ def get_issues_without_epic(
     Returns:
         str: Formatted list of issues without an epic
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -462,37 +400,33 @@ def get_issues_without_epic(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/epic/none/issue", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/epic/none/issue", params=params)
+        issues = response.get("issues", [])
+        total = response.get("total", 0)
 
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
+        if not issues:
+            return f"No issues without epic found for board {board_id}"
 
-            if not issues:
-                return f"No issues without epic found for board {board_id}"
+        result = (
+            f"Found {len(issues)} of {total} total issues without epic for board {board_id}:\n\n"
+        )
 
-            result = f"Found {len(issues)} of {total} total issues without epic for board {board_id}:\n\n"
+        for issue in issues:
+            key = issue.get("key", "Unknown")
+            fields = issue.get("fields", {})
+            summary = fields.get("summary", "No summary")
+            status = fields.get("status", {}).get("name", "Unknown status")
+            issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
 
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
+            result += f"- {key} [{issue_type}]: {summary} ({status})\n"
 
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
+        if len(issues) < total:
+            result += (
+                f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
+            )
 
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving issues without epic for board {board_id}: {str(e)}"
@@ -525,7 +459,7 @@ def get_epic_issues(
     Returns:
         str: Formatted list of issues in the epic
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -536,37 +470,31 @@ def get_epic_issues(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/epic/{epic_id}/issue", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/epic/{epic_id}/issue", params=params)
+        issues = response.get("issues", [])
+        total = response.get("total", 0)
 
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
+        if not issues:
+            return f"No issues found in epic {epic_id} for board {board_id}"
 
-            if not issues:
-                return f"No issues found in epic {epic_id} for board {board_id}"
+        result = f"Found {len(issues)} of {total} total issues in epic {epic_id} for board {board_id}:\n\n"
 
-            result = f"Found {len(issues)} of {total} total issues in epic {epic_id} for board {board_id}:\n\n"
+        for issue in issues:
+            key = issue.get("key", "Unknown")
+            fields = issue.get("fields", {})
+            summary = fields.get("summary", "No summary")
+            status = fields.get("status", {}).get("name", "Unknown status")
+            issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
 
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
+            result += f"- {key} [{issue_type}]: {summary} ({status})\n"
 
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
+        if len(issues) < total:
+            result += (
+                f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
+            )
 
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving issues for epic {epic_id} in board {board_id}: {str(e)}"
@@ -585,33 +513,25 @@ def get_board_features(board_id: int) -> str:
     Returns:
         str: Formatted list of board features and their status
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/features")
 
-        try:
-            response = client.get(f"board/{board_id}/features")
+        features = response.get("features", [])
 
-            features = response.get("features", [])
+        if not features:
+            return f"No features found for board {board_id}"
 
-            if not features:
-                return f"No features found for board {board_id}"
+        result = f"Features for board {board_id}:\n\n"
 
-            result = f"Features for board {board_id}:\n\n"
+        for feature in features:
+            feature_id = feature.get("id", "Unknown")
+            feature_name = feature.get("name", "Unknown")
+            feature_state = feature.get("state", "Unknown")
 
-            for feature in features:
-                feature_id = feature.get("id", "Unknown")
-                feature_name = feature.get("name", "Unknown")
-                feature_state = feature.get("state", "Unknown")
+            result += f"- Feature: {feature_name} (ID: {feature_id}), State: {feature_state}\n"
 
-                result += f"- Feature: {feature_name} (ID: {feature_id}), State: {feature_state}\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving features for board {board_id}: {str(e)}"
@@ -636,20 +556,12 @@ def toggle_board_feature(
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         data = {"state": state}
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.put(f"board/{board_id}/features/{feature_key}", data)
-            return f"Successfully set feature '{feature_key}' to '{state}' on board {board_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.put(f"board/{board_id}/features/{feature_key}", data)
+        return f"Successfully set feature '{feature_key}' to '{state}' on board {board_id}"
 
     except Exception as e:
         return f"Error toggling feature '{feature_key}' on board {board_id}: {str(e)}"
@@ -680,7 +592,7 @@ def get_board_issues(
     Returns:
         str: Formatted list of issues on the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -691,37 +603,31 @@ def get_board_issues(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/issue", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/issue", params=params)
+        issues = response.get("issues", [])
+        total = response.get("total", 0)
 
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
+        if not issues:
+            return f"No issues found for board {board_id}"
 
-            if not issues:
-                return f"No issues found for board {board_id}"
+        result = f"Found {len(issues)} of {total} total issues for board {board_id}:\n\n"
 
-            result = f"Found {len(issues)} of {total} total issues for board {board_id}:\n\n"
+        for issue in issues:
+            key = issue.get("key", "Unknown")
+            fields = issue.get("fields", {})
+            summary = fields.get("summary", "No summary")
+            status = fields.get("status", {}).get("name", "Unknown status")
+            issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
 
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
+            result += f"- {key} [{issue_type}]: {summary} ({status})\n"
 
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
+        if len(issues) < total:
+            result += (
+                f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
+            )
 
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving issues for board {board_id}: {str(e)}"
@@ -748,7 +654,7 @@ def move_issues_to_board(
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         data = {"issues": issues}
 
@@ -758,16 +664,8 @@ def move_issues_to_board(
         if rank_after:
             data["rankAfter"] = rank_after
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.post(f"board/{board_id}/issue", data)
-            return f"Successfully moved {len(issues)} issues to board {board_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.post(f"board/{board_id}/issue", data)
+        return f"Successfully moved {len(issues)} issues to board {board_id}"
 
     except Exception as e:
         return f"Error moving issues to board {board_id}: {str(e)}"
@@ -786,33 +684,25 @@ def get_board_projects(board_id: int) -> str:
     Returns:
         str: Formatted list of projects associated with the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/project")
 
-        try:
-            response = client.get(f"board/{board_id}/project")
+        projects = response.get("values", [])
 
-            projects = response.get("values", [])
+        if not projects:
+            return f"No projects found for board {board_id}"
 
-            if not projects:
-                return f"No projects found for board {board_id}"
+        result = f"Projects associated with board {board_id}:\n\n"
 
-            result = f"Projects associated with board {board_id}:\n\n"
+        for project in projects:
+            project_id = project.get("id", "Unknown")
+            project_key = project.get("key", "Unknown")
+            project_name = project.get("name", "Unknown")
 
-            for project in projects:
-                project_id = project.get("id", "Unknown")
-                project_key = project.get("key", "Unknown")
-                project_name = project.get("name", "Unknown")
+            result += f"- Project: {project_name} (Key: {project_key}, ID: {project_id})\n"
 
-                result += f"- Project: {project_name} (Key: {project_key}, ID: {project_id})\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving projects for board {board_id}: {str(e)}"
@@ -831,47 +721,39 @@ def get_board_projects_full(board_id: int) -> str:
     Returns:
         str: Formatted detailed list of projects associated with the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/project/full")
 
-        try:
-            response = client.get(f"board/{board_id}/project/full")
+        projects = response.get("values", [])
 
-            projects = response.get("values", [])
+        if not projects:
+            return f"No projects found for board {board_id}"
 
-            if not projects:
-                return f"No projects found for board {board_id}"
+        result = f"Detailed projects associated with board {board_id}:\n\n"
 
-            result = f"Detailed projects associated with board {board_id}:\n\n"
+        for project in projects:
+            project_id = project.get("id", "Unknown")
+            project_key = project.get("key", "Unknown")
+            project_name = project.get("name", "Unknown")
+            project_type = project.get("projectTypeKey", "Unknown")
 
-            for project in projects:
-                project_id = project.get("id", "Unknown")
-                project_key = project.get("key", "Unknown")
-                project_name = project.get("name", "Unknown")
-                project_type = project.get("projectTypeKey", "Unknown")
+            result += (
+                f"- Project: {project_name}\n"
+                f"  Key: {project_key}\n"
+                f"  ID: {project_id}\n"
+                f"  Type: {project_type}\n"
+            )
 
-                result += (
-                    f"- Project: {project_name}\n"
-                    f"  Key: {project_key}\n"
-                    f"  ID: {project_id}\n"
-                    f"  Type: {project_type}\n"
-                )
+            # Add lead information if available
+            if "lead" in project:
+                lead = project.get("lead", {})
+                lead_name = lead.get("displayName", "Unknown")
+                result += f"  Lead: {lead_name}\n"
 
-                # Add lead information if available
-                if "lead" in project:
-                    lead = project.get("lead", {})
-                    lead_name = lead.get("displayName", "Unknown")
-                    result += f"  Lead: {lead_name}\n"
+            result += "\n"
 
-                result += "\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving detailed projects for board {board_id}: {str(e)}"
@@ -890,30 +772,22 @@ def get_board_property_keys(board_id: int) -> str:
     Returns:
         str: List of property keys
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/properties")
 
-        try:
-            response = client.get(f"board/{board_id}/properties")
+        keys = response.get("keys", [])
 
-            keys = response.get("keys", [])
+        if not keys:
+            return f"No properties found for board {board_id}"
 
-            if not keys:
-                return f"No properties found for board {board_id}"
+        result = f"Properties for board {board_id}:\n\n"
+        for key_info in keys:
+            key = key_info.get("key", "Unknown")
+            # self_url = key_info.get("self", "Unknown")
+            result += f"- {key}\n"
 
-            result = f"Properties for board {board_id}:\n\n"
-            for key_info in keys:
-                key = key_info.get("key", "Unknown")
-                # self_url = key_info.get("self", "Unknown")
-                result += f"- {key}\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving property keys for board {board_id}: {str(e)}"
@@ -933,22 +807,14 @@ def get_board_property(board_id: int, property_key: str) -> str:
     Returns:
         str: Property value
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/properties/{property_key}")
 
-        try:
-            response = client.get(f"board/{board_id}/properties/{property_key}")
+        key = response.get("key", "Unknown")
+        value = response.get("value", "No value")
 
-            key = response.get("key", "Unknown")
-            value = response.get("value", "No value")
-
-            return f"Property '{key}' for board {board_id}: {value}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return f"Property '{key}' for board {board_id}: {value}"
 
     except Exception as e:
         return f"Error retrieving property '{property_key}' for board {board_id}: {str(e)}"
@@ -969,18 +835,10 @@ def set_board_property(board_id: int, property_key: str, value: Any) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.put(f"board/{board_id}/properties/{property_key}", value)
-            return f"Successfully set property '{property_key}' for board {board_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.put(f"board/{board_id}/properties/{property_key}", value)
+        return f"Successfully set property '{property_key}' for board {board_id}"
 
     except Exception as e:
         return f"Error setting property '{property_key}' for board {board_id}: {str(e)}"
@@ -1000,18 +858,10 @@ def delete_board_property(board_id: int, property_key: str) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.delete(f"board/{board_id}/properties/{property_key}")
-            return f"Successfully deleted property '{property_key}' from board {board_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.delete(f"board/{board_id}/properties/{property_key}")
+        return f"Successfully deleted property '{property_key}' from board {board_id}"
 
     except Exception as e:
         return f"Error deleting property '{property_key}' from board {board_id}: {str(e)}"
@@ -1032,37 +882,27 @@ def get_all_quickfilters(board_id: int, start_at: int = 0, max_results: int = 50
     Returns:
         str: Formatted list of quick filters on the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/quickfilter", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/quickfilter", params=params)
+        quick_filters = response.get("values", [])
 
-            quick_filters = response.get("values", [])
+        if not quick_filters:
+            return f"No quick filters found for board {board_id}"
 
-            if not quick_filters:
-                return f"No quick filters found for board {board_id}"
+        result = f"Quick filters for board {board_id}:\n\n"
 
-            result = f"Quick filters for board {board_id}:\n\n"
+        for filter in quick_filters:
+            filter_id = filter.get("id", "Unknown")
+            filter_name = filter.get("name", "Unknown")
+            filter_query = filter.get("jql", "No JQL")
 
-            for filter in quick_filters:
-                filter_id = filter.get("id", "Unknown")
-                filter_name = filter.get("name", "Unknown")
-                filter_query = filter.get("jql", "No JQL")
+            result += f"- Quick Filter: {filter_name} (ID: {filter_id})\n  JQL: {filter_query}\n\n"
 
-                result += (
-                    f"- Quick Filter: {filter_name} (ID: {filter_id})\n  JQL: {filter_query}\n\n"
-                )
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving quick filters for board {board_id}: {str(e)}"
@@ -1082,30 +922,22 @@ def get_quickfilter(board_id: int, quickfilter_id: int) -> str:
     Returns:
         str: Formatted quick filter details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/quickfilter/{quickfilter_id}")
 
-        try:
-            response = client.get(f"board/{board_id}/quickfilter/{quickfilter_id}")
+        filter_id = response.get("id", "Unknown")
+        filter_name = response.get("name", "Unknown")
+        filter_query = response.get("jql", "No JQL")
+        filter_desc = response.get("description", "No description")
 
-            filter_id = response.get("id", "Unknown")
-            filter_name = response.get("name", "Unknown")
-            filter_query = response.get("jql", "No JQL")
-            filter_desc = response.get("description", "No description")
+        result = (
+            f"Quick Filter: {filter_name} (ID: {filter_id})\n"
+            f"Description: {filter_desc}\n"
+            f"JQL: {filter_query}\n"
+        )
 
-            result = (
-                f"Quick Filter: {filter_name} (ID: {filter_id})\n"
-                f"Description: {filter_desc}\n"
-                f"JQL: {filter_query}\n"
-            )
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving quick filter {quickfilter_id} for board {board_id}: {str(e)}"
@@ -1124,35 +956,27 @@ def get_board_reports(board_id: int) -> str:
     Returns:
         str: Formatted list of reports available for the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/reports")
 
-        try:
-            response = client.get(f"board/{board_id}/reports")
+        reports = response.get("values", [])
 
-            reports = response.get("values", [])
+        if not reports:
+            return f"No reports found for board {board_id}"
 
-            if not reports:
-                return f"No reports found for board {board_id}"
+        result = f"Reports for board {board_id}:\n\n"
 
-            result = f"Reports for board {board_id}:\n\n"
+        for report in reports:
+            report_key = report.get("key", "Unknown")
+            report_name = report.get("name", "Unknown")
+            report_desc = report.get("description", "No description")
 
-            for report in reports:
-                report_key = report.get("key", "Unknown")
-                report_name = report.get("name", "Unknown")
-                report_desc = report.get("description", "No description")
+            result += (
+                f"- Report: {report_name} (Key: {report_key})\n  Description: {report_desc}\n\n"
+            )
 
-                result += (
-                    f"- Report: {report_name} (Key: {report_key})\n  Description: {report_desc}\n\n"
-                )
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving reports for board {board_id}: {str(e)}"
@@ -1179,46 +1003,38 @@ def get_all_sprints(
     Returns:
         str: Formatted list of sprints on the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
         if state:
             params["state"] = ",".join(state)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/sprint", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/sprint", params=params)
+        sprints = response.get("values", [])
 
-            sprints = response.get("values", [])
+        if not sprints:
+            return f"No sprints found for board {board_id}"
 
-            if not sprints:
-                return f"No sprints found for board {board_id}"
+        result = f"Sprints for board {board_id}:\n\n"
 
-            result = f"Sprints for board {board_id}:\n\n"
+        for sprint in sprints:
+            sprint_id = sprint.get("id", "Unknown")
+            sprint_name = sprint.get("name", "Unknown")
+            sprint_state = sprint.get("state", "Unknown")
 
-            for sprint in sprints:
-                sprint_id = sprint.get("id", "Unknown")
-                sprint_name = sprint.get("name", "Unknown")
-                sprint_state = sprint.get("state", "Unknown")
+            result += f"- Sprint: {sprint_name} (ID: {sprint_id}, State: {sprint_state})\n"
 
-                result += f"- Sprint: {sprint_name} (ID: {sprint_id}, State: {sprint_state})\n"
+            # Add dates if available
+            if sprint.get("startDate"):
+                result += f"  Start Date: {sprint.get('startDate')}\n"
+            if sprint.get("endDate"):
+                result += f"  End Date: {sprint.get('endDate')}\n"
 
-                # Add dates if available
-                if sprint.get("startDate"):
-                    result += f"  Start Date: {sprint.get('startDate')}\n"
-                if sprint.get("endDate"):
-                    result += f"  End Date: {sprint.get('endDate')}\n"
+            result += "\n"
 
-                result += "\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving sprints for board {board_id}: {str(e)}"
@@ -1251,7 +1067,7 @@ def get_sprint_issues_for_board(
     Returns:
         str: Formatted list of issues in the sprint
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -1262,37 +1078,31 @@ def get_sprint_issues_for_board(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/sprint/{sprint_id}/issue", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/sprint/{sprint_id}/issue", params=params)
+        issues = response.get("issues", [])
+        total = response.get("total", 0)
 
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
+        if not issues:
+            return f"No issues found in sprint {sprint_id} for board {board_id}"
 
-            if not issues:
-                return f"No issues found in sprint {sprint_id} for board {board_id}"
+        result = f"Found {len(issues)} of {total} total issues in sprint {sprint_id} for board {board_id}:\n\n"
 
-            result = f"Found {len(issues)} of {total} total issues in sprint {sprint_id} for board {board_id}:\n\n"
+        for issue in issues:
+            key = issue.get("key", "Unknown")
+            fields = issue.get("fields", {})
+            summary = fields.get("summary", "No summary")
+            status = fields.get("status", {}).get("name", "Unknown status")
+            issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
 
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
+            result += f"- {key} [{issue_type}]: {summary} ({status})\n"
 
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
+        if len(issues) < total:
+            result += (
+                f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
+            )
 
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving issues for sprint {sprint_id} in board {board_id}: {str(e)}"
@@ -1319,49 +1129,39 @@ def get_board_versions(
     Returns:
         str: Formatted list of versions on the board
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
         if released is not None:
             params["released"] = str(released).lower()
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"board/{board_id}/version", params=params)
 
-        try:
-            response = client.get(f"board/{board_id}/version", params=params)
+        versions = response.get("values", [])
 
-            versions = response.get("values", [])
+        if not versions:
+            return f"No versions found for board {board_id}"
 
-            if not versions:
-                return f"No versions found for board {board_id}"
+        result = f"Versions for board {board_id}:\n\n"
 
-            result = f"Versions for board {board_id}:\n\n"
+        for version in versions:
+            version_id = version.get("id", "Unknown")
+            version_name = version.get("name", "Unknown")
+            is_released = version.get("released", False)
+            release_status = "Released" if is_released else "Unreleased"
 
-            for version in versions:
-                version_id = version.get("id", "Unknown")
-                version_name = version.get("name", "Unknown")
-                is_released = version.get("released", False)
-                release_status = "Released" if is_released else "Unreleased"
+            result += f"- Version: {version_name} (ID: {version_id}, Status: {release_status})\n"
 
-                result += (
-                    f"- Version: {version_name} (ID: {version_id}, Status: {release_status})\n"
-                )
+            # Add dates if available
+            if version.get("startDate"):
+                result += f"  Start Date: {version.get('startDate')}\n"
+            if version.get("releaseDate"):
+                result += f"  Release Date: {version.get('releaseDate')}\n"
 
-                # Add dates if available
-                if version.get("startDate"):
-                    result += f"  Start Date: {version.get('startDate')}\n"
-                if version.get("releaseDate"):
-                    result += f"  Release Date: {version.get('releaseDate')}\n"
+            result += "\n"
 
-                result += "\n"
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return result
 
     except Exception as e:
         return f"Error retrieving versions for board {board_id}: {str(e)}"

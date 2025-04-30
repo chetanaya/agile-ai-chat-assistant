@@ -5,6 +5,8 @@ This module provides tools for interacting with JIRA backlogs through the REST A
 Based on: https://developer.atlassian.com/cloud/jira/software/rest/api-group-backlog/
 """
 
+import json
+
 from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
@@ -33,9 +35,9 @@ def get_backlog_items(
         fields (List[str], optional): List of issue fields to include in the response
 
     Returns:
-        str: Formatted list of issues in the backlog
+        str: JSON string with backlog issues data
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -46,37 +48,8 @@ def get_backlog_items(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Boards API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get(f"board/{board_id}/backlog", params=params)
-
-            issues = response.get("issues", [])
-            total = response.get("total", 0)
-
-            if not issues:
-                return f"No issues found in the backlog for board {board_id}"
-
-            result = f"Found {len(issues)} of {total} total issues in the backlog for board {board_id}:\n\n"
-
-            for issue in issues:
-                key = issue.get("key", "Unknown")
-                fields = issue.get("fields", {})
-                summary = fields.get("summary", "No summary")
-                status = fields.get("status", {}).get("name", "Unknown status")
-                issue_type = fields.get("issuetype", {}).get("name", "Unknown type")
-
-                result += f"- {key} [{issue_type}]: {summary} ({status})\n"
-
-            if len(issues) < total:
-                result += f"\nShowing {len(issues)} of {total} issues. Use start_at parameter to see more."
-
-            return result
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get(f"board/{board_id}/backlog", params=params)
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving backlog issues for board {board_id}: {str(e)}"
@@ -96,21 +69,13 @@ def move_issues_to_backlog(issue_keys: list[str]) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Agile API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        data = {"issues": issue_keys}
+        client.post("backlog/issue", data)
 
-        try:
-            data = {"issues": issue_keys}
-            client.post("backlog/issue", data)
-
-            keys_str = ", ".join(issue_keys)
-            return f"Successfully moved issues to backlog: {keys_str}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        keys_str = ", ".join(issue_keys)
+        return f"Successfully moved issues to backlog: {keys_str}"
 
     except Exception as e:
         return f"Error moving issues to backlog: {str(e)}"
@@ -134,7 +99,7 @@ def rank_backlog_issues(
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         # Validate that only one of rankBefore or rankAfter is provided
         if rankBefore and rankAfter:
@@ -143,25 +108,17 @@ def rank_backlog_issues(
         if not (rankBefore or rankAfter):
             return "Error: Either rankBefore or rankAfter must be provided"
 
-        # The Agile API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        data = {"issues": issues}
 
-        try:
-            data = {"issues": issues}
+        if rankBefore:
+            data["rankBefore"] = rankBefore
+        else:
+            data["rankAfter"] = rankAfter
 
-            if rankBefore:
-                data["rankBefore"] = rankBefore
-            else:
-                data["rankAfter"] = rankAfter
+        client.put("backlog/issue", data)
 
-            client.put("backlog/issue", data)
-
-            issues_str = ", ".join(issues)
-            return f"Successfully ranked issues in backlog: {issues_str}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        issues_str = ", ".join(issues)
+        return f"Successfully ranked issues in backlog: {issues_str}"
 
     except Exception as e:
         return f"Error ranking issues in backlog: {str(e)}"

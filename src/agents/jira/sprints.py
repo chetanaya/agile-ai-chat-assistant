@@ -35,7 +35,7 @@ def create_sprint(
     Returns:
         str: JSON string with created sprint details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         # Prepare data for the API request
         data = {"name": name, "originBoardId": origin_board_id}
@@ -48,18 +48,8 @@ def create_sprint(
         if goal:
             data["goal"] = goal
 
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.post("sprint", data)
-
-            # return f"Sprint created successfully: {response.get('id', 'Unknown')} - {response.get('name', 'Unknown')}"
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.post("sprint", data)
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error creating sprint: {str(e)}"
@@ -78,18 +68,10 @@ def get_sprint(sprint_id: int) -> str:
     Returns:
         str: JSON string with sprint details
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get(f"sprint/{sprint_id}")
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get(f"sprint/{sprint_id}")
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving sprint {sprint_id}: {str(e)}"
@@ -122,7 +104,7 @@ def update_sprint(
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         data = {}
 
@@ -144,16 +126,8 @@ def update_sprint(
         if not data:
             return "No updates specified"
 
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.put(f"sprint/{sprint_id}", data)
-            return f"Sprint {sprint_id} updated successfully"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.put(f"sprint/{sprint_id}", data)
+        return f"Sprint {sprint_id} updated successfully"
 
     except Exception as e:
         return f"Error updating sprint {sprint_id}: {str(e)}"
@@ -173,18 +147,10 @@ def delete_sprint(sprint_id: int) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.delete(f"sprint/{sprint_id}")
-            return f"Sprint {sprint_id} deleted successfully"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.delete(f"sprint/{sprint_id}")
+        return f"Sprint {sprint_id} deleted successfully"
 
     except Exception as e:
         return f"Error deleting sprint {sprint_id}: {str(e)}"
@@ -213,7 +179,7 @@ def get_sprint_issues(
     Returns:
         str: JSON string with sprint issues data
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         params = {"startAt": start_at, "maxResults": max_results}
 
@@ -223,16 +189,8 @@ def get_sprint_issues(
         if fields:
             params["fields"] = ",".join(fields)
 
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get(f"sprint/{sprint_id}/issue", params=params)
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get(f"sprint/{sprint_id}/issue", params=params)
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving issues for sprint {sprint_id}: {str(e)}"
@@ -261,7 +219,7 @@ def move_issues_to_sprint(
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         data = {"issues": issues}
 
@@ -274,16 +232,8 @@ def move_issues_to_sprint(
         if rank_custom_field_id:
             data["rankCustomFieldId"] = rank_custom_field_id
 
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.post(f"sprint/{sprint_id}/issue", data)
-            return f"Successfully moved {len(issues)} issues to sprint {sprint_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.post(f"sprint/{sprint_id}/issue", data)
+        return f"Successfully moved {len(issues)} issues to sprint {sprint_id}"
 
     except Exception as e:
         return f"Error moving issues to sprint {sprint_id}: {str(e)}"
@@ -302,31 +252,16 @@ def get_sprint_properties_keys(sprint_id: int) -> str:
     Returns:
         str: JSON string with property keys
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
+        response = client.get(f"sprint/{sprint_id}/properties")
 
-        try:
-            response = client.get(f"sprint/{sprint_id}/properties")
+        keys = response.get("keys", [])
 
-            keys = response.get("keys", [])
+        if not keys:
+            return f"No properties found for sprint {sprint_id}"
 
-            if not keys:
-                return f"No properties found for sprint {sprint_id}"
-
-            # result = f"Properties for sprint {sprint_id}:\n"
-            # for key_info in keys:
-            #     key = key_info.get("key", "Unknown")
-            #     # self_url = key_info.get("self", "Unknown")
-            #     result += f"- {key}\n"
-
-            # return result
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving property keys for sprint {sprint_id}: {str(e)}"
@@ -346,23 +281,10 @@ def get_sprint_property(sprint_id: int, property_key: str) -> str:
     Returns:
         str: JSON string with Property value
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            response = client.get(f"sprint/{sprint_id}/properties/{property_key}")
-
-            # key = response.get("key", "Unknown")
-            # value = response.get("value", "No value")
-
-            # return f"Property '{key}' for sprint {sprint_id}: {value}"
-            return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        response = client.get(f"sprint/{sprint_id}/properties/{property_key}")
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
 
     except Exception as e:
         return f"Error retrieving property '{property_key}' for sprint {sprint_id}: {str(e)}"
@@ -383,18 +305,10 @@ def set_sprint_property(sprint_id: int, property_key: str, value: Any) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.put(f"sprint/{sprint_id}/properties/{property_key}", value)
-            return f"Successfully set property '{property_key}' for sprint {sprint_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.put(f"sprint/{sprint_id}/properties/{property_key}", value)
+        return f"Successfully set property '{property_key}' for sprint {sprint_id}"
 
     except Exception as e:
         return f"Error setting property '{property_key}' for sprint {sprint_id}: {str(e)}"
@@ -414,18 +328,10 @@ def delete_sprint_property(sprint_id: int, property_key: str) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.delete(f"sprint/{sprint_id}/properties/{property_key}")
-            return f"Successfully deleted property '{property_key}' from sprint {sprint_id}"
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.delete(f"sprint/{sprint_id}/properties/{property_key}")
+        return f"Successfully deleted property '{property_key}' from sprint {sprint_id}"
 
     except Exception as e:
         return f"Error deleting property '{property_key}' from sprint {sprint_id}: {str(e)}"
@@ -445,22 +351,12 @@ def swap_sprint(sprint_id: int, sprint_to_swap_with: int) -> str:
     Returns:
         str: Success or error message
     """
-    client = get_jira_client()
+    client = get_jira_client(api_base_path="rest/agile/1.0/")
     try:
         data = {"sprintToSwapWith": sprint_to_swap_with}
 
-        # The Sprints API uses a different base path
-        original_api_base_path = client.api_base_path
-        client.api_base_path = "rest/agile/1.0/"
-
-        try:
-            client.post(f"sprint/{sprint_id}/swap", data)
-            return (
-                f"Successfully swapped positions of sprints {sprint_id} and {sprint_to_swap_with}"
-            )
-        finally:
-            # Restore the original API base path
-            client.api_base_path = original_api_base_path
+        client.post(f"sprint/{sprint_id}/swap", data)
+        return f"Successfully swapped positions of sprints {sprint_id} and {sprint_to_swap_with}"
 
     except Exception as e:
         return f"Error swapping sprint positions: {str(e)}"
