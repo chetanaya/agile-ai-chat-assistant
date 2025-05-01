@@ -2,8 +2,11 @@
 JIRA API Integration Module
 """
 
+from agents.jira.backlog import backlog_tools
+from agents.jira.boards import board_tools
 from agents.jira.issue_comments import comment_tools
 from agents.jira.issue_search import search_tools
+from agents.jira.issue_types import issue_type_tools
 from agents.jira.issue_worklogs import worklog_tools
 from agents.jira.issues import issue_tools
 from agents.jira.jql import jql_tools
@@ -23,4 +26,7 @@ all_jira_tools = (
     + project_tools
     + sprint_tools
     + user_tools
+    + board_tools
+    + backlog_tools
+    + issue_type_tools
 )

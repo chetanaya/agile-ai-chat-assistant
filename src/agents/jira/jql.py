@@ -6,7 +6,6 @@ It includes endpoints for autocomplete data, suggestions, parsing, and other JQL
 """
 
 import json
-
 from typing import Any
 
 from langchain_core.tools import tool
