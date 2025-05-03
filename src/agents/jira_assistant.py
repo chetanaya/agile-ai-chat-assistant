@@ -16,6 +16,18 @@ from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
 from agents.jira import all_jira_tools
+from agents.jira.backlog import backlog_tools
+from agents.jira.boards import board_tools
+from agents.jira.issue_comments import comment_tools
+from agents.jira.issue_search import search_tools
+from agents.jira.issue_types import issue_type_tools
+from agents.jira.issue_worklogs import worklog_tools
+from agents.jira.issues import issue_tools
+from agents.jira.jql import jql_tools
+from agents.jira.permissions import permission_tools
+from agents.jira.projects import project_tools
+from agents.jira.sprints import sprint_tools
+from agents.jira.users import user_tools
 from agents.llama_guard import LlamaGuard, LlamaGuardOutput, SafetyAssessment
 from core import get_model, settings
 
@@ -33,7 +45,38 @@ class AgentState(MessagesState, total=False):
 
 # Combine all JIRA tools
 tools = []
-tools.extend(all_jira_tools)
+# OpenAI has a limit of 128 tools per request, but all_jira_tools has 132 tools
+# Split tools into core and secondary tools to stay under the limit
+
+# Prioritize the most commonly used tools
+core_tools = []
+core_tools.extend(issue_tools)
+core_tools.extend(search_tools)
+core_tools.extend(sprint_tools)
+core_tools.extend(board_tools)
+core_tools.extend(project_tools)
+core_tools.extend(comment_tools)
+
+# Secondary tools that are less frequently used
+secondary_tools = []
+secondary_tools.extend(backlog_tools)
+secondary_tools.extend(issue_type_tools)
+secondary_tools.extend(worklog_tools)
+secondary_tools.extend(jql_tools)
+secondary_tools.extend(permission_tools)
+secondary_tools.extend(user_tools)
+
+# Use only core tools for now to stay under the 128 limit
+tools = core_tools
+
+# Check the number of tools to ensure we're under the OpenAI limit of 128
+if len(tools) > 120:
+    import warnings
+
+    warnings.warn(
+        f"JIRA assistant has {len(tools)} tools, approaching OpenAI's limit of 128. Consider further reducing the number of tools."
+    )
+    print(f"WARNING: JIRA assistant has {len(tools)} tools, approaching OpenAI's limit of 128.")
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
@@ -41,6 +84,7 @@ instructions = f"""
     Today's date is {current_date}.
 
     NOTE: THE USER CAN'T SEE THE TOOL RESPONSE.
+    NOTE: Due to API limitations, only core JIRA functionality is available.
 
     Core guidelines:
     - Use full issue keys (e.g., "PROJECT-123") when referring to JIRA issues
@@ -48,7 +92,14 @@ instructions = f"""
     - For dates, use ISO format (YYYY-MM-DD) unless specified otherwise
     - Always verify project and board existence before operations
 
-    KEY SCRUM FUNCTIONS:
+    AVAILABLE SCRUM FUNCTIONS:
+
+    ISSUES:
+    - get_issue(issue_key): Retrieves a specific issue's details
+    - create_issue(project_key, summary, description, issue_type="Task"): Creates a new issue
+    - update_issue(issue_key, summary=None, description=None): Updates an issue
+    - transition_issue(issue_key, transition_id): Changes issue status
+    - search_issues(jql, max_results=10): Searches for issues using JQL queries
 
     SPRINTS:
     - create_sprint(name, origin_board_id, start_date=None): Creates a new sprint
@@ -56,47 +107,40 @@ instructions = f"""
     - update_sprint(sprint_id, name=None, goal=None, state=None): Updates a sprint
     - get_sprint_issues(sprint_id): Gets issues in a sprint
     - move_issues_to_sprint(sprint_id, issues): Adds issues to a sprint
-    - swap_sprint(sprint_id, sprint_to_swap_with): Reorders sprints in backlog
 
     BOARDS:
     - get_all_boards(): Lists all accessible boards
     - create_board(name, type_, filter_id=None): Creates a new board
     - get_board(board_id): Gets details of a specific board
-    - get_backlog_issues(board_id): Gets backlog issues
     - get_board_configuration(board_id): Gets board settings and columns
     - get_board_issues(board_id): Gets all issues on a board
     - get_all_sprints(board_id): Lists sprints on a board
-    - get_sprint_issues_for_board(board_id, sprint_id): Gets issues in a sprint
-
-    BACKLOG:
-    - get_backlog_issues_for_board(board_id): Lists all backlog issues
-    - move_issues_to_backlog(issues): Moves issues back to the backlog
-    - rank_backlog_issues(issues): Reorders issues in the backlog
-
-    ISSUE MANAGEMENT:
-    - get_issue(issue_key): Retrieves a specific issue's details
-    - create_issue(project_key, summary, description, issue_type="Task"): Creates a new issue
-    - update_issue(issue_key, summary=None, description=None): Updates an issue
-    - transition_issue(issue_key, transition_id): Changes issue status
-    - search_issues(jql, max_results=10): Searches for issues using JQL queries
 
     PROJECTS:
     - get_all_projects(): Lists all accessible projects
     - get_project(project_key): Gets detailed information about a project
+
+    COMMENTS:
+    - get_comments(issue_key): Gets all comments for an issue
+    - add_comment(issue_key, comment): Adds a comment to an issue
+    - update_comment(issue_key, comment_id, comment): Updates an existing comment
+    - delete_comment(issue_key, comment_id): Deletes a comment
 
     Common workflows:
 
     Sprint creation and management:
     1. get_all_boards(name="Project board") → find board ID
     2. create_sprint(name="Sprint 1", origin_board_id=123) → create sprint
-    3. get_backlog_issues(board_id=123) → find issues for sprint
+    3. search_issues(jql="project = PROJECT AND status = Backlog") → find issues for sprint
     4. move_issues_to_sprint(sprint_id=456, issues=["PROJECT-123", "PROJECT-124"]) → add issues
     5. update_sprint(sprint_id=456, state="active", start_date="2025-04-21T09:00:00.000Z") → start sprint
 
-    Board management:
-    1. get_all_boards() → find existing boards
-    2. create_board(name="New Board", type_="scrum") → create board
-    3. get_board_configuration(board_id=123) → view columns and settings
+    Issue management:
+    1. get_project(project_key="PROJECT") → verify project exists
+    2. create_issue(project_key="PROJECT", summary="New task", description="Details") → create issue
+    3. get_issue(issue_key="PROJECT-123") → get issue details
+    4. update_issue(issue_key="PROJECT-123", summary="Updated task") → modify issue
+    5. add_comment(issue_key="PROJECT-123", comment="Progress update") → add comment
 
     Best practices:
     - Use specific JQL queries to filter results efficiently

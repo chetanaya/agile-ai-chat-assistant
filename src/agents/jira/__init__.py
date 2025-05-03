@@ -16,6 +16,8 @@ from agents.jira.sprints import sprint_tools
 from agents.jira.users import user_tools
 
 # Consolidate all JIRA tools for easy import
+# WARNING: This list exceeds OpenAI's limit of 128 tools per API call
+# When using with OpenAI models, use a subset of these tools as done in jira_assistant.py
 all_jira_tools = (
     issue_tools
     + comment_tools
