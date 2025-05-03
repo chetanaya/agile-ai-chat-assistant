@@ -4,6 +4,8 @@ JIRA Users API Functions
 This module provides tools for interacting with JIRA users through the REST API.
 """
 
+import json
+
 from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
@@ -22,17 +24,7 @@ def get_current_user() -> str:
     client = get_jira_client()
     try:
         response = client.get("myself")
-
-        display_name = response.get("displayName", "Unknown")
-        email = response.get("emailAddress", "Unknown")
-        account_id = response.get("accountId", "Unknown")
-
-        result = "Current User Information:\n"
-        result += f"Name: {display_name}\n"
-        result += f"Email: {email}\n"
-        result += f"Account ID: {account_id}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving current user information: {str(e)}"
 
@@ -54,24 +46,8 @@ def find_users(query: str, max_results: int = 10) -> str:
     client = get_jira_client()
     try:
         params = {"query": query, "maxResults": max_results}
-
         response = client.get("user/search", params=params)
-
-        result = f"Users matching '{query}':\n\n"
-
-        if not response:
-            return f"No users found matching '{query}'"
-
-        for user in response:
-            display_name = user.get("displayName", "Unknown")
-            email = user.get("emailAddress", "Unknown email")
-            account_id = user.get("accountId", "Unknown ID")
-
-            result += f"- {display_name}\n"
-            result += f"  Email: {email}\n"
-            result += f"  Account ID: {account_id}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error searching for users: {str(e)}"
 
@@ -89,18 +65,7 @@ def get_user_permissions() -> str:
     client = get_jira_client()
     try:
         response = client.get("mypermissions")
-        permissions = response.get("permissions", {})
-
-        result = "Your JIRA Permissions:\n\n"
-
-        for perm_key, perm_info in permissions.items():
-            has_permission = perm_info.get("havePermission", False)
-            description = perm_info.get("description", "No description")
-
-            status = "✓" if has_permission else "✗"
-            result += f"{status} {perm_key}: {description}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving user permissions: {str(e)}"
 
@@ -122,24 +87,8 @@ def get_assignable_users(project_key: str, max_results: int = 10) -> str:
     client = get_jira_client()
     try:
         params = {"project": project_key, "maxResults": max_results}
-
         response = client.get("user/assignable/search", params=params)
-
-        result = f"Users assignable to project {project_key}:\n\n"
-
-        if not response:
-            return f"No assignable users found for project {project_key}"
-
-        for user in response:
-            display_name = user.get("displayName", "Unknown")
-            email = user.get("emailAddress", "Unknown email")
-            account_id = user.get("accountId", "Unknown ID")
-
-            result += f"- {display_name}\n"
-            result += f"  Email: {email}\n"
-            result += f"  Account ID: {account_id}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving assignable users for project {project_key}: {str(e)}"
 
@@ -161,17 +110,7 @@ def get_user_by_account_id(account_id: str) -> str:
     try:
         params = {"accountId": account_id}
         response = client.get("user", params=params)
-
-        display_name = response.get("displayName", "Unknown")
-        email = response.get("emailAddress", "Unknown email")
-        active = "Active" if response.get("active", False) else "Inactive"
-
-        result = f"User Information for Account ID {account_id}:\n"
-        result += f"Name: {display_name}\n"
-        result += f"Email: {email}\n"
-        result += f"Status: {active}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving user with account ID {account_id}: {str(e)}"
 
@@ -193,19 +132,7 @@ def get_user_groups(account_id: str) -> str:
     try:
         params = {"accountId": account_id}
         response = client.get("user/groups", params=params)
-
-        result = f"Groups for user with account ID {account_id}:\n\n"
-
-        if not response:
-            return f"No groups found for user with account ID {account_id}"
-
-        for group in response:
-            name = group.get("name", "Unknown group")
-            group_id = group.get("groupId", "No ID")
-
-            result += f"- {name} (ID: {group_id})\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving groups for user with account ID {account_id}: {str(e)}"
 
@@ -221,17 +148,13 @@ def get_user_email_by_account_id(account_id: str) -> str:
         account_id (str): The account ID of the user
 
     Returns:
-        str: The user's email address
+        str: JSON string with the user's email address
     """
     client = get_jira_client()
     try:
         params = {"accountId": account_id}
         response = client.get("user/email", params=params)
-
-        if not response:
-            return f"No email found for user with account ID {account_id}"
-
-        return f"Email for user with account ID {account_id}: {response}"
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving email for user with account ID {account_id}: {str(e)}"
 
@@ -254,17 +177,7 @@ def get_user_email_bulk(account_ids: str) -> str:
         account_id_list = [aid.strip() for aid in account_ids.split(",")]
         params = {"accountId": account_id_list}
         response = client.get("user/email/bulk", params=params)
-
-        result = "Email addresses for specified users:\n\n"
-
-        if not response:
-            return "No email addresses found for the specified users"
-
-        for account_id, email in response.items():
-            result += f"Account ID: {account_id}\n"
-            result += f"Email: {email}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving emails for users: {str(e)}"
 
@@ -286,22 +199,7 @@ def get_all_users(max_results: int = 50) -> str:
     try:
         params = {"maxResults": max_results}
         response = client.get("users", params=params)
-
-        result = f"All users (showing up to {max_results}):\n\n"
-
-        if not response:
-            return "No users found"
-
-        for user in response:
-            display_name = user.get("displayName", "Unknown")
-            email = user.get("emailAddress", "Unknown email")
-            account_id = user.get("accountId", "Unknown ID")
-
-            result += f"- {display_name}\n"
-            result += f"  Email: {email}\n"
-            result += f"  Account ID: {account_id}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving all users: {str(e)}"
 
@@ -324,20 +222,7 @@ def get_account_ids_for_users(usernames: str) -> str:
         username_list = [username.strip() for username in usernames.split(",")]
         params = {"username": username_list}
         response = client.get("user/bulk/migration", params=params)
-
-        result = "Account IDs for specified usernames:\n\n"
-
-        if not response:
-            return "No account IDs found for the specified usernames"
-
-        for user_data in response:
-            username = user_data.get("username", "Unknown")
-            account_id = user_data.get("accountId", "Unknown ID")
-
-            result += f"Username: {username}\n"
-            result += f"Account ID: {account_id}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving account IDs for usernames: {str(e)}"
 
@@ -359,16 +244,7 @@ def get_user_default_columns(account_id: str) -> str:
     try:
         params = {"accountId": account_id}
         response = client.get("user/columns", params=params)
-
-        result = f"Default columns for user with account ID {account_id}:\n\n"
-
-        if not response:
-            return f"No default columns found for user with account ID {account_id}"
-
-        for column in response:
-            result += f"- {column}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving default columns for user with account ID {account_id}: {str(e)}"
 

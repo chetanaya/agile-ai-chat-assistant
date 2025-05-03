@@ -107,6 +107,7 @@ async def _handle_input(user_input: UserInput, agent: Pregel) -> tuple[dict[str,
     config = RunnableConfig(
         configurable=configurable,
         run_id=run_id,
+        recursion_limit=50,  # Increasing recursion limit from default 25
     )
 
     # Check for interrupts that need to be resumed
@@ -199,23 +200,29 @@ async def message_generator(
                         for interrupt in updates:
                             new_messages.append(AIMessage(content=interrupt.value))
                         continue
+
                     updates = updates or {}
                     update_messages = updates.get("messages", [])
+
                     # special cases for using langgraph-supervisor library
                     if node == "supervisor":
                         # Get only the last AIMessage since supervisor includes all previous messages
                         ai_messages = [msg for msg in update_messages if isinstance(msg, AIMessage)]
                         if ai_messages:
                             update_messages = [ai_messages[-1]]
-                    if node in ("research_expert", "math_expert"):
-                        # By default the sub-agent output is returned as an AIMessage.
-                        # Convert it to a ToolMessage so it displays in the UI as a tool response.
-                        msg = ToolMessage(
-                            content=update_messages[0].content,
-                            name=node,
-                            tool_call_id="",
-                        )
-                        update_messages = [msg]
+                    # Check if node is a sub-agent (ends with _agent) or is a known sub-agent type
+                    elif node.endswith("_agent") or node in getattr(agent, "agents", []):
+                        # Only process if there are messages to handle
+                        if update_messages and len(update_messages) > 0:
+                            # By default the sub-agent output is returned as an AIMessage.
+                            # Convert it to a ToolMessage so it displays in the UI as a tool response.
+                            msg = ToolMessage(
+                                content=update_messages[0].content,
+                                name=node,
+                                tool_call_id="",
+                            )
+                            update_messages = [msg]
+
                     new_messages.extend(update_messages)
 
             if stream_mode == "custom":

@@ -4,6 +4,7 @@ from langgraph.pregel import Pregel
 
 from agents.azure_devops_assistant import azure_devops_assistant
 from agents.jira_assistant import jira_assistant
+from agents.jira_supervisor_assistant import jira_supervisor_assistant
 from schema import AgentInfo
 
 DEFAULT_AGENT = "jira-assistant"
@@ -18,6 +19,10 @@ class Agent:
 agents: dict[str, Agent] = {
     "jira-assistant": Agent(
         description="A JIRA assistant to manage JIRA board.", graph=jira_assistant
+    ),
+    "jira-supervisor-assistant": Agent(
+        description="A JIRA supervisor assistant with specialized sub-agents for different JIRA domains.",
+        graph=jira_supervisor_assistant,
     ),
     "azure-devops-assistant": Agent(
         description="An Azure DevOps assistant to manage Azure DevOps resources.",

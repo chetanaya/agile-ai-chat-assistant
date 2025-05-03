@@ -4,6 +4,8 @@ JIRA Issue Search API Functions
 This module provides tools for searching JIRA issues through the REST API.
 """
 
+import json
+
 from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
@@ -32,21 +34,7 @@ def search_issues(jql: str, max_results: int = 10) -> str:
         }
 
         response = client.post("search", data)
-
-        issues = response.get("issues", [])
-        total = response.get("total", 0)
-
-        result = f"Found {total} issues. Showing {len(issues)} results:\n\n"
-
-        for issue in issues:
-            key = issue.get("key", "Unknown")
-            fields = issue.get("fields", {})
-            summary = fields.get("summary", "No summary")
-            status_name = fields.get("status", {}).get("name", "Unknown status")
-
-            result += f"- {key}: {summary} ({status_name})\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error searching issues: {str(e)}"
 
@@ -68,7 +56,7 @@ def match_issues_with_jql(
         issue_keys (List[str], optional): A list of issue keys to check.
 
     Returns:
-        str: Results showing which issues match which queries
+        str: JSON string with match results
     """
     client = get_jira_client()
     try:
@@ -86,32 +74,7 @@ def match_issues_with_jql(
             data["issueKeys"] = issue_keys
 
         response = client.post("jql/match", data)
-
-        matches = response.get("matches", [])
-        result = "JQL Match Results:\n\n"
-
-        for i, match in enumerate(matches):
-            result += f'Query {i + 1}: "{jql_queries[i]}"\n'
-
-            matched_issues = match.get("matchedIssues", [])
-            if matched_issues:
-                result += f"  Matched {len(matched_issues)} issues:\n"
-                for issue in matched_issues[:10]:  # Limit to first 10 for readability
-                    result += f"  - Issue ID: {issue}\n"
-                if len(matched_issues) > 10:
-                    result += f"  - ... and {len(matched_issues) - 10} more\n"
-            else:
-                result += "  No issues matched this query.\n"
-
-            errors = match.get("errors", [])
-            if errors:
-                result += "  Errors:\n"
-                for error in errors:
-                    result += f"  - {error}\n"
-
-            result += "\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error matching issues with JQL: {str(e)}"
 
@@ -137,7 +100,7 @@ def get_issue_picker_suggestions(
         show_sub_task_parent (bool, optional): Whether to include parent issue of subtasks. Defaults to False.
 
     Returns:
-        str: Formatted issue picker suggestions
+        str: JSON string with issue picker suggestions
     """
     client = get_jira_client()
     try:
@@ -154,30 +117,7 @@ def get_issue_picker_suggestions(
             params["currentIssueKey"] = current_issue_key
 
         response = client.get("issue/picker", params=params)
-
-        sections = response.get("sections", [])
-        result = "Issue picker suggestions:\n\n"
-
-        for section in sections:
-            section_label = section.get("label", "Unnamed section")
-            result += f"{section_label}:\n"
-
-            issues = section.get("issues", [])
-            if issues:
-                for issue in issues:
-                    key = issue.get("key", "Unknown")
-                    summary = issue.get("summaryText", "No summary")
-                    result += f"- {key}: {summary}\n"
-            else:
-                message = section.get("msg", "No issues found")
-                result += f"  {message}\n"
-
-            result += "\n"
-
-        if not sections:
-            result += "No suggestions found for the query.\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error getting issue picker suggestions: {str(e)}"
 
@@ -193,14 +133,12 @@ def count_issues_by_jql(jql: str) -> str:
         jql (str): JQL query string (e.g., "project = PROJ AND status = 'In Progress'")
 
     Returns:
-        str: Issue count for the JQL query
+        str: JSON string with issue count data
     """
     client = get_jira_client()
     try:
         response = client.post("issue/jqlCountForFilter", {"jql": jql})
-        issue_count = response.get("issueCount", 0)
-
-        return f"Found {issue_count} issues matching the JQL query:\n{jql}"
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error counting issues for JQL query: {str(e)}"
 
@@ -217,36 +155,13 @@ def parse_jql_queries(queries: list[str], validate_only: bool = False) -> str:
         validate_only (bool, optional): If True, only validates without converting. Defaults to False.
 
     Returns:
-        str: Parsed and validated JQL results
+        str: JSON string with parsing results
     """
     client = get_jira_client()
     try:
         data = {"queries": queries, "validateOnly": validate_only}
-
         response = client.post("jql/parse", data)
-
-        results = response.get("queries", [])
-        result = "JQL Query Parsing Results:\n\n"
-
-        for i, parsed in enumerate(results):
-            query = queries[i]
-            result += f'Query {i + 1}: "{query}"\n'
-
-            errors = parsed.get("errors", [])
-            if errors:
-                result += "  Errors:\n"
-                for error in errors:
-                    result += f"  - {error}\n"
-            else:
-                result += "  Valid: Yes\n"
-
-            converted_query = parsed.get("convertedQuery", "")
-            if converted_query and not validate_only:
-                result += f'  Converted Query: "{converted_query}"\n'
-
-            result += "\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error parsing JQL queries: {str(e)}"
 
@@ -259,32 +174,12 @@ def get_advanced_search_fields() -> str:
     Useful for discovering available fields for building JQL queries.
 
     Returns:
-        str: Formatted list of fields for advanced search
+        str: JSON string with searchable fields data
     """
     client = get_jira_client()
     try:
         response = client.get("field/search")
-
-        fields = response.get("fields", [])
-        result = f"Found {len(fields)} searchable fields:\n\n"
-
-        for field in fields:
-            id = field.get("id", "Unknown")
-            name = field.get("name", "Unknown")
-            clause_names = field.get("clauseNames", [])
-
-            result += f"- {name} (ID: {id})\n"
-            if clause_names:
-                result += f"  JQL clauses: {', '.join(clause_names)}\n"
-
-            schema = field.get("schema")
-            if schema:
-                type_name = schema.get("type", "Unknown type")
-                result += f"  Type: {type_name}\n"
-
-            result += "\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error getting advanced search fields: {str(e)}"
 

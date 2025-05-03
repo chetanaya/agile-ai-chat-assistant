@@ -5,6 +5,7 @@ This module provides tools for working with JQL through the REST API.
 It includes endpoints for autocomplete data, suggestions, parsing, and other JQL-specific operations.
 """
 
+import json
 from typing import Any
 
 from langchain_core.tools import tool
@@ -21,57 +22,12 @@ def get_field_reference_data() -> str:
     This data can be used to build JQL queries programmatically.
 
     Returns:
-        str: Formatted JQL reference data information
+        str: JSON string with JQL reference data
     """
     client = get_jira_client()
     try:
         response = client.get("jql/autocompletedata")
-
-        # Extract key information from the response
-        jql_reserved_words = response.get("jqlReservedWords", [])
-        visible_fields = response.get("visibleFieldNames", [])
-        visible_functions = response.get("visibleFunctionNames", [])
-
-        result = "JQL Reference Data:\n\n"
-
-        # Reserved words
-        result += "Reserved Words:\n"
-        for word in jql_reserved_words:
-            result += f"- {word}\n"
-        result += "\n"
-
-        # Fields
-        result += f"Available Fields ({len(visible_fields)}):\n"
-        for field in visible_fields[:10]:  # Limit to 10 fields for readability
-            field_name = field.get("value", "Unknown")
-            display_name = field.get("displayName", field_name)
-            orderable = "Yes" if field.get("orderable") == "true" else "No"
-            searchable = "Yes" if field.get("searchable") == "true" else "No"
-
-            result += f"- {display_name} (Field: {field_name})\n"
-            result += f"  Orderable: {orderable}, Searchable: {searchable}\n"
-
-            operators = field.get("operators", [])
-            if operators:
-                result += f"  Operators: {', '.join(operators)}\n"
-
-            result += "\n"
-
-        if len(visible_fields) > 10:
-            result += f"... and {len(visible_fields) - 10} more fields\n\n"
-
-        # Functions
-        result += f"Available Functions ({len(visible_functions)}):\n"
-        for function in visible_functions[:10]:  # Limit to 10 functions for readability
-            function_name = function.get("value", "Unknown")
-            display_name = function.get("displayName", function_name)
-
-            result += f"- {display_name} (Function: {function_name})\n"
-
-        if len(visible_functions) > 10:
-            result += f"... and {len(visible_functions) - 10} more functions\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving JQL reference data: {str(e)}"
 
@@ -94,7 +50,7 @@ def post_field_reference_data(
         field_ids (List[str], optional): List of field IDs to get reference data for
 
     Returns:
-        str: Filtered JQL reference data information
+        str: JSON string with filtered JQL reference data
     """
     client = get_jira_client()
     try:
@@ -107,46 +63,7 @@ def post_field_reference_data(
             data["fieldIds"] = field_ids
 
         response = client.post("jql/autocompletedata", data)
-
-        # Extract key information from the response
-        jql_reserved_words = response.get("jqlReservedWords", [])
-        visible_fields = response.get("visibleFieldNames", [])
-        visible_functions = response.get("visibleFunctionNames", [])
-
-        result = "Filtered JQL Reference Data:\n\n"
-
-        # Reserved words
-        result += "Reserved Words:\n"
-        for word in jql_reserved_words:
-            result += f"- {word}\n"
-        result += "\n"
-
-        # Fields
-        result += f"Fields ({len(visible_fields)}):\n"
-        for field in visible_fields:
-            field_name = field.get("value", "Unknown")
-            display_name = field.get("displayName", field_name)
-            orderable = "Yes" if field.get("orderable") == "true" else "No"
-            searchable = "Yes" if field.get("searchable") == "true" else "No"
-
-            result += f"- {display_name} (Field: {field_name})\n"
-            result += f"  Orderable: {orderable}, Searchable: {searchable}\n"
-
-            operators = field.get("operators", [])
-            if operators:
-                result += f"  Operators: {', '.join(operators)}\n"
-
-            result += "\n"
-
-        # Functions
-        result += f"Functions ({len(visible_functions)}):\n"
-        for function in visible_functions:
-            function_name = function.get("value", "Unknown")
-            display_name = function.get("displayName", function_name)
-
-            result += f"- {display_name} (Function: {function_name})\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving filtered JQL reference data: {str(e)}"
 
@@ -168,7 +85,7 @@ def get_field_autocomplete_suggestions(
         predicates (List[str], optional): List of predicates to filter the suggestions
 
     Returns:
-        str: Formatted autocomplete suggestions
+        str: JSON string with autocomplete suggestions
     """
     client = get_jira_client()
     try:
@@ -181,20 +98,7 @@ def get_field_autocomplete_suggestions(
             params["predicates"] = ",".join(predicates)
 
         response = client.get("jql/autocompletedata/suggestions", params=params)
-
-        results = response.get("results", [])
-        result = f"Autocomplete Suggestions for '{field_name}={field_value}':\n\n"
-
-        if not results:
-            return f"No suggestions found for '{field_name}={field_value}'"
-
-        for suggestion in results:
-            display_name = suggestion.get("displayName", "Unknown")
-            value = suggestion.get("value", "Unknown")
-
-            result += f"- {display_name} (Value: {value})\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving JQL autocomplete suggestions: {str(e)}"
 
@@ -215,7 +119,7 @@ def sanitize_jql_queries(
         account_id (str, optional): The account ID of the user for which sanitization occurs
 
     Returns:
-        str: Sanitized JQL queries
+        str: JSON string with sanitized JQL queries
     """
     client = get_jira_client()
     try:
@@ -224,27 +128,7 @@ def sanitize_jql_queries(
             data["accountId"] = account_id
 
         response = client.post("jql/sanitize", data)
-
-        sanitized_queries = response.get("queries", [])
-        result = "Sanitized JQL Queries:\n\n"
-
-        for i, query_info in enumerate(sanitized_queries):
-            initial_query = query_info.get("initialQuery", "Unknown")
-            sanitized_query = query_info.get("sanitizedQuery", "Unknown")
-
-            result += f"Query {i + 1}:\n"
-            result += f"  Original: {initial_query}\n"
-            result += f"  Sanitized: {sanitized_query}\n"
-
-            errors = query_info.get("errors", {}).get("errorMessages", [])
-            if errors:
-                result += "  Errors:\n"
-                for error in errors:
-                    result += f"  - {error}\n"
-
-            result += "\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error sanitizing JQL queries: {str(e)}"
 
@@ -261,33 +145,13 @@ def convert_user_ids_in_jql(queries: list[str]) -> str:
         queries (List[str]): A list of JQL queries to convert
 
     Returns:
-        str: JQL queries with user identifiers converted to account IDs
+        str: JSON string with converted JQL queries
     """
     client = get_jira_client()
     try:
         data = {"queries": queries}
         response = client.post("jql/pdcleaner", data)
-
-        converted_queries = response.get("queryStrings", [])
-        unknown_users = response.get("queriesWithUnknownUsers", [])
-
-        result = "Converted JQL Queries:\n\n"
-
-        for i, query in enumerate(converted_queries):
-            result += f"Query {i + 1}:\n"
-            result += f"  Converted: {query}\n\n"
-
-        if unknown_users:
-            result += "Queries with Unknown Users:\n"
-            for i, unknown in enumerate(unknown_users):
-                original = unknown.get("originalQuery", "Unknown")
-                converted = unknown.get("convertedQuery", "Unknown")
-
-                result += f"Query {i + 1}:\n"
-                result += f"  Original: {original}\n"
-                result += f"  Converted: {converted}\n\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error converting user IDs in JQL queries: {str(e)}"
 
@@ -305,42 +169,13 @@ def parse_jql_query(query: str, validation_level: str = "strict") -> str:
         validation_level (str, optional): Validation level: "strict", "warn", or "none". Defaults to "strict".
 
     Returns:
-        str: Detailed information about the parsed query structure
+        str: JSON string with parsed JQL query data
     """
     client = get_jira_client()
     try:
         data = {"queries": [query], "validation": validation_level}
-
         response = client.post("jql/parse", data)
-        queries = response.get("queries", [])
-
-        if not queries:
-            return "Error parsing JQL query: No parse results returned"
-
-        parsed = queries[0]
-
-        result = f"Parse Results for JQL Query: {query}\n\n"
-
-        # Check for errors
-        errors = parsed.get("errors", [])
-        if errors:
-            result += "Errors:\n"
-            for error in errors:
-                result += f"- {error}\n"
-            return result
-
-        # Check if query was converted (typically for user identifiers)
-        converted_query = parsed.get("convertedQuery")
-        if converted_query:
-            result += f"Converted Query: {converted_query}\n\n"
-
-        # Get structure information if available
-        structure = parsed.get("structure")
-        if structure:
-            result += "Query Structure:\n"
-            result += format_jql_structure(structure, indent=2)
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error parsing JQL query: {str(e)}"
 

@@ -15,10 +15,12 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode
 
+from agents.jira import all_jira_tools
 from agents.jira.backlog import backlog_tools
 from agents.jira.boards import board_tools
 from agents.jira.issue_comments import comment_tools
 from agents.jira.issue_search import search_tools
+from agents.jira.issue_types import issue_type_tools
 from agents.jira.issue_worklogs import worklog_tools
 from agents.jira.issues import issue_tools
 from agents.jira.jql import jql_tools
@@ -43,136 +45,113 @@ class AgentState(MessagesState, total=False):
 
 # Combine all JIRA tools
 tools = []
-tools.extend(issue_tools)
-tools.extend(comment_tools)
-tools.extend(search_tools)
-tools.extend(project_tools)
-tools.extend(user_tools)
-tools.extend(worklog_tools)
-tools.extend(jql_tools)
-tools.extend(permission_tools)
-tools.extend(sprint_tools)
-tools.extend(board_tools)
-tools.extend(backlog_tools)
+# OpenAI has a limit of 128 tools per request, but all_jira_tools has 132 tools
+# Split tools into core and secondary tools to stay under the limit
+
+# Prioritize the most commonly used tools
+core_tools = []
+core_tools.extend(issue_tools)
+core_tools.extend(search_tools)
+core_tools.extend(sprint_tools)
+core_tools.extend(board_tools)
+core_tools.extend(project_tools)
+core_tools.extend(comment_tools)
+
+# Secondary tools that are less frequently used
+secondary_tools = []
+secondary_tools.extend(backlog_tools)
+secondary_tools.extend(issue_type_tools)
+secondary_tools.extend(worklog_tools)
+secondary_tools.extend(jql_tools)
+secondary_tools.extend(permission_tools)
+secondary_tools.extend(user_tools)
+
+# Use only core tools for now to stay under the 128 limit
+tools = core_tools
+
+# Check the number of tools to ensure we're under the OpenAI limit of 128
+if len(tools) > 120:
+    import warnings
+
+    warnings.warn(
+        f"JIRA assistant has {len(tools)} tools, approaching OpenAI's limit of 128. Consider further reducing the number of tools."
+    )
+    print(f"WARNING: JIRA assistant has {len(tools)} tools, approaching OpenAI's limit of 128.")
 
 current_date = datetime.now().strftime("%B %d, %Y")
 instructions = f"""
-    You are a helpful JIRA assistant with the ability to interact with JIRA through the REST API.
+    You are a helpful JIRA assistant focused on scrum management. You can interact with JIRA through its REST API.
     Today's date is {current_date}.
 
     NOTE: THE USER CAN'T SEE THE TOOL RESPONSE.
+    NOTE: Due to API limitations, only core JIRA functionality is available.
 
     Core guidelines:
     - Use full issue keys (e.g., "PROJECT-123") when referring to JIRA issues
     - For time tracking, use JIRA format (e.g., "3h 30m" for 3 hours and 30 minutes)
     - For dates, use ISO format (YYYY-MM-DD) unless specified otherwise
-    - Always verify project key or project ID availability before proceeding with operations as these are required for most JIRA functions
+    - Always verify project and board existence before operations
 
-    Field handling:
-    - To unassign an issue, set assignee or account_id to null (not empty string or "unassigned")
-    - For priority, status, and resolution, use exact IDs/names as configured in JIRA
-    - For custom fields, use the proper field ID (e.g., "customfield_10001")
-    - When changing issue status, always check available transitions first
-    - Use Atlassian Document Format (ADF) for rich text fields like descriptions and comments
+    AVAILABLE SCRUM FUNCTIONS:
 
-    Permission handling:
-    - Always check permissions before performing actions that might require specific permissions
-    - Use get_my_permissions to check if the user has permission for specific actions
-    - For project-related actions, check project permissions first
-    - For issue operations, verify the user has the appropriate issue permissions
-    - Use check_bulk_permissions for checking multiple permissions at once
-    - If permissions are missing, inform the user clearly and suggest alternatives
-    - Use get_permitted_projects to find projects where the user can perform specific actions
+    ISSUES:
+    - get_issue(issue_key): Retrieves a specific issue's details
+    - create_issue(project_key, summary, description, issue_type="Task"): Creates a new issue
+    - update_issue(issue_key, summary=None, description=None): Updates an issue
+    - transition_issue(issue_key, transition_id): Changes issue status
+    - search_issues(jql, max_results=10): Searches for issues using JQL queries
+
+    SPRINTS:
+    - create_sprint(name, origin_board_id, start_date=None): Creates a new sprint
+    - get_sprint(sprint_id): Gets details of a specific sprint
+    - update_sprint(sprint_id, name=None, goal=None, state=None): Updates a sprint
+    - get_sprint_issues(sprint_id): Gets issues in a sprint
+    - move_issues_to_sprint(sprint_id, issues): Adds issues to a sprint
+
+    BOARDS:
+    - get_all_boards(): Lists all accessible boards
+    - create_board(name, type_, filter_id=None): Creates a new board
+    - get_board(board_id): Gets details of a specific board
+    - get_board_configuration(board_id): Gets board settings and columns
+    - get_board_issues(board_id): Gets all issues on a board
+    - get_all_sprints(board_id): Lists sprints on a board
+
+    PROJECTS:
+    - get_all_projects(): Lists all accessible projects
+    - get_project(project_key): Gets detailed information about a project
+
+    COMMENTS:
+    - get_comments(issue_key): Gets all comments for an issue
+    - add_comment(issue_key, comment): Adds a comment to an issue
+    - update_comment(issue_key, comment_id, comment): Updates an existing comment
+    - delete_comment(issue_key, comment_id): Deletes a comment
+
+    Common workflows:
+
+    Sprint creation and management:
+    1. get_all_boards(name="Project board") → find board ID
+    2. create_sprint(name="Sprint 1", origin_board_id=123) → create sprint
+    3. search_issues(jql="project = PROJECT AND status = Backlog") → find issues for sprint
+    4. move_issues_to_sprint(sprint_id=456, issues=["PROJECT-123", "PROJECT-124"]) → add issues
+    5. update_sprint(sprint_id=456, state="active", start_date="2025-04-21T09:00:00.000Z") → start sprint
 
     Issue management:
-    - For creating issues, use create_issue and verify required fields first with get_create_issue_metadata
-    - For updating issues, use update_issue and check editable fields with get_edit_issue_metadata
-    - For status changes, always check get_issue_transitions before transition_issue
-    - Use bulk_create_issues and bulk_fetch_issues for handling multiple issues efficiently
-    - For issue history, use get_issue_changelog to track all changes made to an issue
-    - Handle archived issues with archive_issues_by_keys, archive_issues_by_jql, and unarchive_issues
+    1. get_project(project_key="PROJECT") → verify project exists
+    2. create_issue(project_key="PROJECT", summary="New task", description="Details") → create issue
+    3. get_issue(issue_key="PROJECT-123") → get issue details
+    4. update_issue(issue_key="PROJECT-123", summary="Updated task") → modify issue
+    5. add_comment(issue_key="PROJECT-123", comment="Progress update") → add comment
 
-    Sprint management:
-    - To create sprints, use create_sprint with the appropriate board ID
-    - Get sprint details with get_sprint before making any sprint changes
-    - For updating sprints, use update_sprint to modify name, goal, dates, or state
-    - When adding issues to sprints, use move_issues_to_sprint
-    - View sprint issues with get_sprint_issues, with optional JQL filtering
-    - For adjusting sprint order, use swap_sprint to change the position in the backlog
-    - Store custom data with sprint properties using set_sprint_property
-    - Sprint states can be "future", "active", or "closed"
-    - Always provide ISO format dates when working with sprint date fields
+    Best practices:
+    - Use specific JQL queries to filter results efficiently
+    - For sprint dates, ensure start_date comes before end_date in ISO format
+    - When transitioning issues, always check available transitions first
+    - Use bulk operations when working with multiple issues
 
-    Search and JQL:
-    - Use JQL (JIRA Query Language) for efficient searching with proper syntax
-    - Leverage get_field_reference_data for available fields and operators
-    - Use get_field_autocomplete_suggestions for building accurate JQL expressions
-    - Parse and validate JQL queries with parse_jql_query before executing searches
-    - Sanitize queries with sanitize_jql_queries when necessary for better performance
-    - For searching users, prefer accountId over username for better compatibility
-    - Use Sprint-specific JQL functions like sprint() when appropriate
-
-    Comments and worklog:
-    - Create comments with proper Atlassian Document Format
-    - Get all comments on an issue to provide context for user requests
-    - Track work with detailed worklog entries including timeSpent field
-    - Retrieve worklog history to analyze time spent on issues
-
-    Project and user operations:
-    - Verify project existence before performing actions
-    - Get user information for assignee selection using proper account IDs
-    - Check project permissions and roles before making changes
-    - Use JQL functions like currentUser() when appropriate
-
-    Common function call patterns:
-    - Issue creation flow: get_create_issue_metadata → create_issue
-    - Issue update flow: get_issue → get_edit_issue_metadata → update_issue
-    - Status change flow: get_issue_transitions → transition_issue
-    - Comment flow: get_issue_comments → add_comment
-    - Worklog flow: get_issue_worklogs → add_worklog
-    - Search flow: get_field_reference_data → search_issues_by_jql
-    - Archive flow: search_issues_by_jql → archive_issues_by_keys
-    - Permission check: get_my_permissions → [operation function]
-    - Sprint creation flow: create_sprint → move_issues_to_sprint
-    - Sprint update flow: get_sprint → update_sprint
-    - Sprint issue flow: get_sprint_issues → move_issues_to_sprint
-
-    Function parameter handling:
-    - Always pass required parameters (e.g., issue_key, project_key, sprint_id)
-    - For issue updates, specify only the fields that need to change
-    - For JQL queries, build them step by step using proper syntax
-    - Use optional parameters only when necessary for the specific use case
-    - For list parameters (e.g., issue_keys), format correctly as arrays/lists
-    - For sprint operations, provide the sprint_id as an integer, not a string
-
-    For complex requests:
-    - Break down multiple tasks and address them systematically
-    - Outline your approach before executing operations
-    - Process one operation at a time with status updates
-    - Verify success before moving to the next step
-    - Use batch operations for efficiency when possible
-    - For multi-step operations, show your plan before execution
-    - Remember previous steps when handling operations that span multiple exchanges
-    - Correctly identify when multiple function calls are needed to complete a task
-    - After each operation, verify success before proceeding to next steps
-
-    Problem solving:
-    - If uncertain about configuration, use appropriate tools to look it up
-    - For errors, analyze the message carefully and adjust your approach
-    - For permissions errors, inform the user about possible insufficient permissions
-    - When searching for issues, construct appropriate JQL queries
-    - Use get_field_reference_data to understand available fields and operators
-    - When handling errors, explain what went wrong and suggest specific corrections
-    - If a function call fails, don't retry with identical parameters
-    - For Sprint API calls, remember they use a different API base path (rest/agile/1.0/)
-
-    Response formatting:
-    - Present JIRA data in an organized, readable format
-    - For lists of issues, use clear formatting with key details
-    - Highlight important information using formatting (e.g., issue keys, status changes)
-    - For complex data, summarize key points before showing details
-    - Translate technical errors into user-friendly explanations
-    """
+    API Base Paths:
+    - Standard Jira API: rest/api/3/
+    - Agile API (boards, sprints): rest/agile/1.0/
+"""
 
 
 def wrap_model(model: BaseChatModel) -> RunnableSerializable[AgentState, AIMessage]:

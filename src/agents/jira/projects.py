@@ -4,6 +4,8 @@ JIRA Projects API Functions
 This module provides tools for interacting with JIRA projects through the REST API.
 """
 
+import json
+
 from langchain_core.tools import tool
 
 from agents.jira.utils import get_jira_client
@@ -22,15 +24,7 @@ def get_all_projects() -> str:
     client = get_jira_client()
     try:
         response = client.get("project")
-
-        result = "Available JIRA Projects:\n\n"
-
-        for project in response:
-            key = project.get("key", "Unknown")
-            name = project.get("name", "Unnamed Project")
-            result += f"- {key}: {name}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving projects: {str(e)}"
 
@@ -52,16 +46,7 @@ def get_project(project_key: str) -> str:
     try:
         response = client.get(f"project/{project_key}")
 
-        key = response.get("key", "Unknown")
-        name = response.get("name", "Unnamed Project")
-        description = response.get("description", "No description")
-        lead = response.get("lead", {}).get("displayName", "Unknown")
-
-        result = f"Project: {name} ({key})\n"
-        result += f"Lead: {lead}\n"
-        result += f"Description: {description}\n"
-
-        return result
+        return json.dumps(response, sort_keys=True, indent=4, separators=(",", ": "))
     except Exception as e:
         return f"Error retrieving project {project_key}: {str(e)}"
 
